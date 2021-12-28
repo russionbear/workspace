@@ -1,6 +1,4 @@
-#test
-#frame1.0/modes
-#frame1.0/musics
-#frame1.0/tmp
-#frame1.0/source
+
 *.pyc
+.idea
+

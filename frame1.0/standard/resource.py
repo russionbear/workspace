@@ -263,23 +263,26 @@ class Mode:
         return obj
 
     def to_json(self):
-        rlt = {
-            "collide_rect": self.__collideRect,
-        }
+        rlt = {}
         for k, v in self.__actions.items():
             for k1, v1 in v.items():
-                layers = v['layer']
+                if 'layer' not in v1:
+                    continue
+                layers = v1['layer']
                 rate = []
                 size = []
                 for p in layers:
-                    rate.append(v['offsetRate'][p])
-                    size.append(v['offsetSize'][p])
+                    rate.append(v1['offset_rate'][p])
+                    size.append(v1['offset_size'][p])
                 rlt['-'.join(['action', k, k1])] = {
                     "layer": layers,
-                    "offsetRate": rate,
-                    "offsetSize": size
+                    "offset_rate": rate,
+                    "offset_size": size
                 }
         return rlt
+
+    def is_interface(self):
+        return self.__interface
 
     # def contains(self, pos):
     #     return
@@ -384,7 +387,7 @@ class Shard:
 
 
 class Spirit:
-    def __init__(self, obj: Mode, pen=None, top=True):
+    def __init__(self, obj: Mode, pen=None, top=True, layer=1):
         self.__pen = pen
         self.__suf = pygame.surface.Surface(resManager.blockSize)
         # 100
@@ -401,10 +404,14 @@ class Spirit:
         self.__action = {}
         # self.__collideRect = 0, 0, 0, 0
         self.__renderOrder: list = []
+        self.__nowAction = None
+
+        self.layer = layer
 
         self.swap(obj.get_first_action()[1], obj.get_first_action()[0])
 
     def swap(self, name, type_=None):
+        self.__nowAction = type_, name
         action = self.__source.get_action(name, type_)
         if 'layer' in action:
             self.__renderOrder = action['layer']
@@ -436,12 +443,12 @@ class Spirit:
     def set_offset_size(self, d0):
         if self.__pen:
             self.__offsetSize = d0
-            self.scale(pen=self.__pen)
+            self.scale()
 
     def set_offset_rate(self, d0):
         if self.__pen:
             self.__offsetRate = d0
-            self.scale(pen=self.__pen)
+            self.scale()
 
     def get_offset_rate(self):
         return self.__offsetRate
@@ -520,11 +527,35 @@ class Spirit:
                     return self.__body[k]
 
     def to_json(self):
-        return self.__source.to_json()
+        tmp_d = self.__source.to_json()
+        for k, v in tmp_d.items():
+            if 'layer' not in v:
+                continue
+            if '-'.join(['action', self.__nowAction[0], self.__nowAction[1]]) == k:
+                for i1, i in enumerate(self.__renderOrder):
+                    tmp_d[k]['offset_rate'][i1] = self.__body[i].get_offset_rate()
+                    tmp_d[k]['offset_size'][i1] = self.__body[i].get_offset_size()
+        print(tmp_d)
+        return tmp_d
 
 
 class Grid:
     pass
+
+
+class UGeo(Spirit):
+    def __init__(self, mode, pen):
+        super(UGeo, self).__init__(mode, pen)
+
+
+class UBuild(Spirit):
+    def __init__(self, mode, pen):
+        super(UBuild, self).__init__(mode, pen, layer=2)
+
+
+class UUnit(Spirit):
+    def __init__(self, mode, pen):
+        super(UUnit, self).__init__(mode, pen, layer=3)
 
 
 class UnitMaker:
@@ -542,6 +573,16 @@ class UnitMaker:
 
 class ModeAdjuster:
     pass
+
+
+"""map render"""
+
+
+class MapRender:
+    def __init__(self, block_size, rl):
+        self.blockSize = block_size
+        self.rl = rl
+        self.spirits = {}
 
 
 """resource manager"""
@@ -763,6 +804,8 @@ class ResManager:
         # it = 1
         it = True
         for i in os.listdir(file_path):
+            if os.path.isfile(i):
+                continue
             ds = os.listdir(file_path + '/' + i)
             tmp_m = {}
             tmp1_m = []
@@ -834,23 +877,42 @@ class ResManager:
             modes2.append(tmp1_m)
             # spirits.append()
             # it += 1
-        self.m = modes2
-        self.modes = modes1
 
-    def save_modes(self, path):
-        for i in self.m:
-            for j in i:
-                if not j.edited:
-                    continue
-                with open(path + '/' + j.edit_path, 'r') as f:
-                    tmp_data = json.load(f)
-                j.edited = False
-                tmp_d = j.to_json()
-                for k, v in tmp_d.items():
-                    tmp_data[k] = v
-                with open(path + '/' + j.edit_path, 'w') as f:
-                    json.dump(tmp_data, f)
+        if not edit:
+            for i in modes2:
+                for j in i:
+                    if j.is_interface():
+                        self.m.append(j)
+            for k, v in modes1.items():
+                self.modes.update(v)
+        else:
+            self.m = modes2
+            self.modes = modes1
 
+    def save_modes(self, path, spirit, **kwargs):
+        with open(path, 'r') as f:
+            tmp_d = json.load(f)
+        tmp_dd = spirit.to_json()
+        for k, v in tmp_dd.items():
+            tmp_d[k] = v
+        with open(path, 'w') as f:
+            json.dump(tmp_d, f)
+        pass
+        # for i in self.m:
+        #     for j in i:
+        #         if not j.edited:
+        #             continue
+        #         with open(path + '/' + j.edit_path, 'r') as f:
+        #             tmp_data = json.load(f)
+        #         j.edited = False
+        #         tmp_d = j.to_json()
+        #         for k, v in tmp_d.items():
+        #             tmp_data[k] = v
+        #         with open(path + '/' + j.edit_path, 'w') as f:
+        #             json.dump(tmp_data, f)
+
+    def grading(self, file_path):
+        pass
     # def load_source(self, filepath: str, edit=False):
     #     filepath = filepath.replace('\\', '/')
     #
@@ -1170,6 +1232,10 @@ class ResManager:
     #     return obj
 
 
+class MapChecker:
+    pass
+
+
 resManager = ResManager()
 
 # resManager.get().
@@ -1178,7 +1244,7 @@ resManager = ResManager()
 if __name__ == '__main__':
     where = 'load_modes'
     if where == 'make_source':
-        dd2 = r'E:\Date_code\py_data\policyGame\frame1.0\source'
+        dd2 = r'C:\Users\暗夜\Desktop\workspace\frame1.0\source'
         # dd3 = ['geo-tree-stand', 'unit-red-man-left',
         #        'unit-red-man-right', 'unit-red-man-up',
         #        'unit-red-man-low']
@@ -1193,20 +1259,20 @@ if __name__ == '__main__':
                 "number": [str(i) for i in range(1, 11)]
             }
         }
-        ResManager.make_test_source_by_tree(r'E:\Date_code\py_data\policyGame\frame1.0\source',
+        ResManager.make_test_source_by_tree(r'C:\Users\暗夜\Desktop\workspace\frame1.0\source',
                                             dd3,
                                             r'E:\Date_code\py_data\yazha_1\msyh.ttc')
 
     elif where == 'test':
         r1 = ResManager()
-        r1.load_source(r'E:\Date_code\py_data\policyGame\frame1.0\source', True)
+        r1.load_source(r'C:\Users\暗夜\Desktop\workspace\frame1.0\source', True)
         r1
 
     elif where == 'load_modes':
         r1 = ResManager()
-        r1.load_source(r'E:\Date_code\py_data\policyGame\frame1.0\source', True)
+        r1.load_source(r'E:\workspace\workspace\workspace\frame1.0\source', True)
         print(r1.d, '\n', r1.index)
-        r1.load_modes(r'E:\Date_code\py_data\policyGame\frame1.0\modes')
+        r1.load_modes(r'E:\workspace\workspace\workspace\frame1.0\modes')
         print(r1.m)
         for i in r1.m[0]:
             print(i.__dict__)

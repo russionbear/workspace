@@ -4,13 +4,14 @@ from core import Core, Pen
 import pygame, os, json
 pygame.init()
 
-SOURCE_PATH = r'E:\Date_code\py_data\policyGame\frame1.0\source'
-MODE_PATH = r'E:\Date_code\py_data\policyGame\frame1.0\modes'
+SOURCE_PATH = r'C:\Users\暗夜\Desktop\workspace\frame1.0\source'
+MODE_PATH = r'C:\Users\暗夜\Desktop\workspace\frame1.0\modes'
 
 # check
 
 
 resManager.load_source(SOURCE_PATH, True)
+print(resManager.m)
 resManager.load_modes(MODE_PATH, True)
 
 
@@ -23,9 +24,16 @@ class ModeAdjuster:
                             pygame.KEYDOWN,
                             pygame.KEYUP}
 
-        self.flip = Flip((win_size[0], 100), self.suf)
-        self.action = Action((win_size[0], 100), self.suf)
-        self.action.anchor = 0, 100
+        self.step = 1
+        self.stepAnchor = 0, 0
+        self.modeName = ''
+        self.modeNameAnchor = 100, 0
+        self.nowAction = '', ''
+        self.nowActionAnchor = 0, 100
+
+        # self.flip = Flip((win_size[0], 100), self.suf)
+        # self.action = Action((win_size[0], 100), self.suf)
+        # self.action.anchor = 0, 100
 
         self.clock = pygame.time.Clock()
         self.nowMode = None
@@ -62,12 +70,18 @@ class ModeAdjuster:
             self.scaleList.append(size)
 
         print(self.swap(0))
+        # print(self.actions)
+        # self.swap(1)
         # print(resManager.m)
 
     def update(self):
         self.suf.fill(self.bgColor)
-        self.flip.update()
-        self.action.update()
+        # self.flip.update()
+        # self.action.update()
+        self.suf.blit(Pen.render(str(self.step)), self.stepAnchor)
+        self.suf.blit(Pen.render(self.modeName), self.modeNameAnchor)
+        self.suf.blit(Pen.render('-'.join(self.nowAction)), self.nowActionAnchor)
+
         if self.nowMode:
             self.nowMode.update(self.clock.get_time())
         if self.gaped:
@@ -80,12 +94,12 @@ class ModeAdjuster:
     def event(self, e1):
         if not self.nowMode:
             return
-        if e1.type == pygame.MOUSEBUTTONDOWN:
-            if self.flip.contains(e1.pos):
-                self.flip.event(e1)
-                return
-            if self.action.contains(e1.pos):
-                self.action.event(e1)
+        # if e1.type == pygame.MOUSEBUTTONDOWN:
+        #     if self.flip.contains(e1.pos):
+        #         self.flip.event(e1)
+        #         return
+        #     if self.action.contains(e1.pos):
+        #         self.action.event(e1)
         # move
         if e1.type == pygame.MOUSEMOTION:
             if e1.buttons[2]:
@@ -141,24 +155,34 @@ class ModeAdjuster:
                 self.keyCtrlDown = True
             elif e1.key == pygame.K_s:
                 if not self.keyCtrlDown:
+                    self.swap_action(-1)
                     return
-                # self.save()
+                self.save()
             elif e1.key == pygame.K_q:
                 if not self.keyCtrlDown:
+                    self.step -= 1
                     return
                 Core.overed = True
+            elif e1.key == pygame.K_e:
+                self.step += 1
+            elif e1.key == pygame.K_a:
+                self.swap(-self.step)
+            elif e1.key == pygame.K_d:
+                self.swap(self.step)
+            elif e1.key == pygame.K_w:
+                self.swap_action(1)
+
         elif e1.type == pygame.KEYUP:
             if e1.key == pygame.K_LCTRL:
                 self.keyCtrlDown = False
 
-    def swap(self, step) -> str:
-        if step + self.point_now < 0:
-            self.point_now = 0
-        elif step + self.point_now >= self.point_all:
-            self.point_now = self.point_all - 1
-        if self.point_now == self.point_all:
+    def swap(self, step):
+        if 0 > self.point_all:
             self.gaped = None
-            return ''
+            self.modeName = ''
+            self.nowAction = '', ''
+            return
+        self.point_now = (step+self.point_all+self.point_now) % self.point_all
 
         now = self.point_now
         for i in resManager.m:
@@ -169,26 +193,26 @@ class ModeAdjuster:
                 self.actions = self.nowMode.get_all_actions()
                 self.now_action = 0
                 self.swap_action(0)
+                print(self.actions)
                 self.nowMode.move(200, 200)
                 self.nowMode.scale(size=self.scaleList[self.nowScalePoint])
-                return i[now].edit_path
+                self.modeName = i[now].edit_path
 
-        return ''
-
-    def swap_action(self, step) -> str:
-        if self.now_action + step >= len(self.actions):
-            self.now_action = len(self.actions) - 1
-        elif self.now_action + step < 0:
-            self.now_action = 0
+    def swap_action(self, step):
+        if len(self.actions) == 0:
+            self.nowAction = '', ''
+            return
+        self.now_action = (step+len(self.actions)+self.now_action) % len(self.actions)
+        # print('hrere')
         act = self.actions[self.now_action]
+        self.nowAction = act
         self.nowMode.swap(act[1], act[0])
         # if self.gaped:
         #     self.gaped.swap(act[1], act[0])
-        return '-'.join(self.actions[self.now_action])
 
-    def swap_layer(self, step) -> int:
-        self.nowMode.edited = True
-        return self.nowMode.swap_layer(self.gaped, step)
+    # def swap_layer(self, step) -> int:
+    #     self.nowMode.edited = True
+    #     return self.nowMode.swap_layer(self.gaped, step)
 
     def set_offset_rate(self, rel):
         size = self.gaped.get_pos()
@@ -206,9 +230,9 @@ class ModeAdjuster:
         self.nowMode.set_offset_size(rate)
         self.nowMode.edited = True
 
-    @staticmethod
-    def save():
-        resManager.save_modes(SOURCE_PATH)
+    def save(self):
+        if self.nowMode:
+            resManager.save_modes(MODE_PATH+'/'+self.modeName, self.nowMode)
 
 
 class Flip(pygame.surface.Surface):

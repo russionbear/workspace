@@ -26,9 +26,24 @@ import sys, functools, time, hashlib, shutil
 #
 # sys.exit(Qapp.exec_())
 
+# print(hash(0))
+# with open(r'E:\workspace\workspace\test\maps\test.json', 'w') as f:
+#     import json
+#     json.dump({1: 12}, f)
+
+d0 = {}
+d0[3] = 34
+d0[4] = 34
+d0[1] = 23
+
+print(d0.items())
+exit()
+
 Qapp = QApplication(sys.argv)
 
-window = BlockEditWin((800, 600), (50, 50), (400, 400), r'E:\Date_code\py_data\policyGame\frame1.0\standard\run')
+window = BlockEditWin((800, 600), (50, 50), (400, 400),
+                      r'E:\workspace\workspace\test\source')
 window.show()
 
 sys.exit(Qapp.exec_())
+

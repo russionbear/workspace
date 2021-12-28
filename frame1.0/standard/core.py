@@ -124,6 +124,7 @@ class _Consigner:
 class _Motor:
     move = 1
     scale = 2
+
     def __init__(self):
         self.__data = []
 

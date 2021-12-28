@@ -10,7 +10,7 @@ import sys, json
 from typing import List
 
 from ..core import Pen, Core
-from ..resource import Resource, ResManager
+from ..resource import resManager
 from ..geography import Spirit
 import pickle, os
 
@@ -26,17 +26,11 @@ class BlockEditWin(QWidget):
     def __init__(self, win_size, block_size, map_size, source_path):
         super(BlockEditWin, self).__init__()
         self.setFixedSize(win_size[0], win_size[1])
-        self.res = ResManager(block_size, source_path)
+        self.res = resManager
         self.res.load_source(source_path, True)
         self.resKeys = {}
         for i in self.res.d:
-            for k, v in i.items():
-                # if isinstance(v, int) or isinstance(v, float) or isinstance(v, str):
-
-                if isinstance(v, str) and k != 'filepath':
-                    pass
-                else:
-                    continue
+            for k, v in zip(i.get_index_key(), i.get_index()):
                 if k not in self.resKeys:
                     self.resKeys[k] = set()
                 self.resKeys[k].add(v)
@@ -82,20 +76,23 @@ class BlockEditWin(QWidget):
         rlt = []
         for i in self.res.d:
             for k, v in keys.items():
-                if k in i:
-                    if i[k] != v:
+                if hasattr(i, k):
+                    if getattr(i, k) != v:
                         break
             else:
                 rlt.append(i)
         self.listView.clear()
         for i in rlt:
             # if i['images']:
-            path = i['filepath']
-            tmp_k = {}
-            for j in self.keys:
-                if j.data in i:
-                    tmp_k[j.data] = i[j.data]
-            self.listView.addItem(QListWidgetItem(QIcon(path), json.dumps(tmp_k)))
+            path = self.res.editPath[i]
+            # tmp_k = {}
+            # for j in self.keys:
+            #     if hasattr(i, j.data):
+            #     # if j.data in i:
+            #         tmp_k[j.data] = i[j.data]
+            self.listView.addItem(
+                QListWidgetItem(QIcon(path),
+                                os.path.split(os.path.split(path)[0])[1]))
         self.nowData = rlt
 
     def choose(self, t0):
@@ -114,7 +111,7 @@ class BlockEditWin(QWidget):
 
 
 class MapSurf:
-    def __init__(self, pen: pygame.surface.Surface, block_size, map_size, source: ResManager):
+    def __init__(self, pen: pygame.surface.Surface, block_size, map_size, source):
         self.blockSize = block_size
         self.priSize = map_size
         self.mapRl = map_size[0] // block_size[0], map_size[1] // block_size[1]
@@ -196,6 +193,9 @@ class MapSurf:
         pass
 
     def handle(self, e1):
+        pass
+
+    def check(self):
         pass
 
 
