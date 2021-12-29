@@ -1,11 +1,11 @@
-from resource import UnitMaker, resManager, Spirit
-from core import Core, Pen
+from .resource import UnitMaker, resManager, Spirit
+from .core import Core, Pen
 
 import pygame, os, json
 pygame.init()
 
-SOURCE_PATH = r'C:\Users\暗夜\Desktop\workspace\frame1.0\source'
-MODE_PATH = r'C:\Users\暗夜\Desktop\workspace\frame1.0\modes'
+SOURCE_PATH = r'C:\Users\暗夜\Desktop\workspace\workspace\test\source'
+MODE_PATH = r'C:\Users\暗夜\Desktop\workspace\workspace\test\modes'
 
 # check
 
@@ -128,7 +128,7 @@ class ModeAdjuster:
                     if self.nowScalePoint + 1 >= len(self.scaleList):
                         return
                     self.nowScalePoint += 1
-                    self.nowMode.scale(self.scaleList[self.nowScalePoint])
+                    self.nowMode.scale(size=self.scaleList[self.nowScalePoint])
                 else:
                     size = self.gaped.get_offset_size()
                     size = size[0] + 1, size[1] + 1
@@ -138,7 +138,7 @@ class ModeAdjuster:
                     if self.nowScalePoint - 1 < 0:
                         return
                     self.nowScalePoint -= 1
-                    self.nowMode.scale(self.scaleList[self.nowScalePoint])
+                    self.nowMode.scale(size=self.scaleList[self.nowScalePoint])
                 else:
                     size = self.gaped.get_offset_size()
                     size = size[0] - 1, size[1] - 1

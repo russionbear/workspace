@@ -126,9 +126,21 @@ class _Motor:
     scale = 2
 
     def __init__(self):
-        self.__data = []
+        self.__move = set()
 
-    # def
+    def add(self, obj):
+        self.__move.add(obj)
+
+    def remove(self, obj):
+        self.__move.remove(obj)
+
+    def update(self):
+        should_d = set()
+        for i in self.__move:
+            if i.auto_move():
+                should_d.add(i)
+        for i in should_d:
+            self.__move.remove(i)
 
 
 Core = _Core()

@@ -304,7 +304,20 @@ class ModeMaker:
         return ModeA(data)
 
 
+"""setting manager"""
+
+
+class STUnit:
+    @classmethod
+    def load(cls, path):
+        pass
+
+    def get(self):
+        pass
+
+
 """unit"""
+# 第一层unit 是必须的
 
 
 class Shard:
@@ -406,7 +419,7 @@ class Spirit:
         self.__renderOrder: list = []
         self.__nowAction = None
 
-        self.layer = layer
+        self.__layer = layer
 
         self.swap(obj.get_first_action()[1], obj.get_first_action()[0])
 
@@ -456,9 +469,10 @@ class Spirit:
     def get_offset_size(self):
         return self.__offsetSize
 
-    def scale(self, size=None):
+    def scale(self, pen=None, size=None):
         if self.__offsetSize is not None:
-            # self.__pen = pen
+            if pen is not None:
+                self.set_pen(pen)
             print(self.__offsetSize)
 
             size = self.__pen.get_size()
@@ -468,7 +482,7 @@ class Spirit:
             )
 
             self.__anchor = size[0] * self.__offsetRate[0] / 100, \
-                            size[1] * self.__offsetRate[1] / 100
+                size[1] * self.__offsetRate[1] / 100
 
         else:
             self.__suf = pygame.surface.Surface((int(size[0]), int(size[1])))
@@ -488,18 +502,21 @@ class Spirit:
     def get_all_actions(self):
         return self.__source.get_all_actions()
 
-    def swap_layer(self, obj, step):
-        for k, v in self.__body.items():
-            if v != obj:
-                continue
-            if k in self.__renderOrder:
-                id_ = self.__renderOrder.index(k)
-                if id_ + step < 0 or id_ + step >= len(self.__renderOrder):
-                    return id_
-                self.__renderOrder.pop(id_)
-                self.__renderOrder.insert(id_ + step, v)
-                return id_ + step
-        return -1
+    def get_layer(self):
+        return self.__layer
+
+    # def swap_layer(self, obj, step):
+    #     for k, v in self.__body.items():
+    #         if v != obj:
+    #             continue
+    #         if k in self.__renderOrder:
+    #             id_ = self.__renderOrder.index(k)
+    #             if id_ + step < 0 or id_ + step >= len(self.__renderOrder):
+    #                 return id_
+    #             self.__renderOrder.pop(id_)
+    #             self.__renderOrder.insert(id_ + step, v)
+    #             return id_ + step
+    #     return -1
 
     def set_pen(self, pen):
         self.__pen = pen
@@ -538,6 +555,9 @@ class Spirit:
         print(tmp_d)
         return tmp_d
 
+    def to_sequence(self):
+        pass
+
 
 class Grid:
     pass
@@ -556,6 +576,41 @@ class UBuild(Spirit):
 class UUnit(Spirit):
     def __init__(self, mode, pen):
         super(UUnit, self).__init__(mode, pen, layer=3)
+        self.moveTarget = None
+        self.moveStep = 10
+
+        self.foot = ''
+        self.sport = ''
+        self.vitality = ''
+        self.dayCost = ''
+        self.eye = ''
+        self.atk = ''
+        self.bullet = 0
+        self.convey = ''
+
+    def auto_move(self):
+        if self.moveTarget:
+            pos1 = self.get_pos()
+            d1 = self.moveTarget[0] - pos1[0], self.moveTarget[1] - pos1[1]
+            distance = (d1[0]**2+d1[1]**2)**0.5
+            size = self.get_size()
+            step = self.moveStep * size[0] / 100
+            if distance <= step:
+                self.move(pos=self.moveTarget)
+                self.moveTarget = None
+                return True
+            else:
+                n = step / distance
+                d1 = int(d1[0]*n) + pos1[0], int(d1[1]*n) + pos1[1]
+                self.move(pos=d1)
+                # return False
+            # end = pos1[0] - self.moveTarget[0], pos1[1] - self.moveTarget[1]
+            # pos = pos1[0] + self.moveStep[0] * size[0] // 100, \
+            #     pos1[1] + self.moveStep[1] * size[1] // 100
+            # self.move(pos=pos)
+
+    def set_move_target(self, tgt):
+        self.moveTarget = tgt
 
 
 class UnitMaker:
@@ -582,7 +637,26 @@ class MapRender:
     def __init__(self, block_size, rl):
         self.blockSize = block_size
         self.rl = rl
-        self.spirits = {}
+        self.bgImage = None
+        self.basicLayer: List[List[Spirit]] = []
+        self.spirits: Dict[tuple: Spirit] = {}
+
+    # def update(self, t0):
+    #     if self.bgImage:
+    #         pass
+    #     for k, v in self.spirits.items():
+
+    def get_bg(self):
+        return self.bgImage
+
+    def get(self, layer, x=0, y=0, pos=None) -> Spirit:
+        pass
+
+    def remove(self, pos=None, obj=None):
+        pass
+
+    def add(self, pos, obj):
+        pass
 
 
 """resource manager"""
@@ -804,7 +878,7 @@ class ResManager:
         # it = 1
         it = True
         for i in os.listdir(file_path):
-            if os.path.isfile(i):
+            if os.path.isfile(file_path + '/' + i):
                 continue
             ds = os.listdir(file_path + '/' + i)
             tmp_m = {}

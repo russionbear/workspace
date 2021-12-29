@@ -7,11 +7,11 @@
 import pygame
 import sys, json
 
-from typing import List
+from typing import List, Dict
 
 from ..core import Pen, Core
-from ..resource import resManager
-from ..geography import Spirit
+from ..resource import resManager, Spirit, UnitMaker
+# from ..geography import Spirit
 import pickle, os
 
 from PyQt5.Qt import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QComboBox \
@@ -114,6 +114,7 @@ class MapSurf:
     def __init__(self, pen: pygame.surface.Surface, block_size, map_size, source):
         self.blockSize = block_size
         self.priSize = map_size
+
         self.mapRl = map_size[0] // block_size[0], map_size[1] // block_size[1]
         self.res = source
 
@@ -127,9 +128,14 @@ class MapSurf:
                             pygame.KEYDOWN,
                             pygame.KEYUP}
 
-        self.map: List[List[Spirit]] = []
+        self.click = pygame.time.Clock()
 
-        self.bgColor = pygame.color.Color(0, 0, 0)
+        self.backGround = None
+        self.basicLayer: List[List[Spirit]] = []
+        self.spirits: Dict[...:tuple:Spirit] = {}
+        # self.map: List[List[Spirit]] = []
+
+        # self.bgColor = pygame.color.Color(0, 0, 0)
 
         size = block_size
         self.scaleList = [size]
@@ -156,11 +162,27 @@ class MapSurf:
 
     def update(self):
         self.pen.blit(self.suf, self.anchor)
-        self.suf.fill(self.bgColor)
-        t0 = pygame.time.Clock().get_time()
-        for r in self.map:
+
+        if self.backGround:
+            self.suf.blit(self.backGround, (0, 0))
+        else:
+            self.suf.fill((0, 0, 0))
+
+        t0 = self.click.get_time()
+        for r in self.basicLayer:
             for l in r:
-                l.update(t0)
+                if l:
+                    l.update(t0)
+
+        for k, v in self.spirits.items():
+            for k1 in list(v.values()):
+                k1.update(t0)
+
+        # for k, v in self.spirits.items():
+        #     for k1, v1 in v.items():
+        #         x, y = self.anchor[0] + k1[0] * self.blockSize[0], \
+        #                self.anchor[1] + k1[1] * self.blockSize[1]
+        #         self.suf.blit(v1, (x, y))
 
     def move(self, y=0, x=0, pos=None):
         if pos:
@@ -177,17 +199,30 @@ class MapSurf:
                 return
             self.nowScalePoint -= 1
         size = self.scaleList[self.nowScalePoint]
+        size_1 = size[0] * self.mapRl[0], size[1] * self.mapRl[1]
 
-        self.anchor = self.anchor[0] + (self.suf.get_width() - size[0]) / 2, \
-                      self.anchor[1] + (self.suf.get_height() - size[1]) / 2
+        self.anchor = self.anchor[0] + (self.suf.get_width() - size_1[0]) / 2, \
+            self.anchor[1] + (self.suf.get_height() - size_1[1]) / 2
 
-        self.suf = pygame.surface.Surface(size)
+        self.suf = pygame.surface.Surface(size_1)
 
-        bw, bh = size[0] // self.mapRl[0], size[1] // self.mapRl[1]
-        for i1, i in enumerate(self.map):
+        for i1, i in enumerate(self.basicLayer):
             for j1, j in enumerate(i):
-                j.scale((bw, bh))
-                j.move(j1*bw, i1*bh)
+                if not j:
+                    continue
+                j.scale(self.suf, size)
+                j.move(size[0]*j1, size[1]*i1)
+
+        for k, v in self.spirits.items():
+            for k1, v1 in v.items():
+                v1.scale(self.suf, size)
+                v1.move(size[0]*k1[0], size[1]*k1[1])
+
+        # bw, bh = size[0] // self.mapRl[0], size[1] // self.mapRl[1]
+        # for i1, i in enumerate(self.map):
+        #     for j1, j in enumerate(i):
+        #         j.scale((bw, bh))
+        #         j.move(j1*bw, i1*bh)
 
     def event(self, e1):
         pass
