@@ -16,6 +16,7 @@ class _Core:
         self.th = None
 
     def run(self):
+        self.overed = False
         while not self.overed:
             for e0 in pygame.event.get():
                 if e0.type == pygame.QUIT:
@@ -33,10 +34,12 @@ class _Core:
             pygame.display.update()
 
     def start(self):
-        if not self.th:
-            self.th = Thread(target=self.run).start()
-        elif not self.th.isAlive():
-            self.th = Thread(target=self.run).start()
+        self.overed = True
+        # self.run()
+        # if not self.th:
+        #     self.th = Thread(target=self.run).start()
+        # elif not self.th.isAlive():
+        #     self.th = Thread(target=self.run).start()
 
     def stop(self):
         self.overed = True
@@ -47,9 +50,10 @@ class _Core:
     #     elif not self.th.isAlive():
     #         self.start()
     #
-    # def hide(self):
-    #     pygame.display.iconify()
-    #     self.stop()
+    def hide(self):
+        self.stop()
+        pygame.display.iconify()
+        # pygame.display
 
     def add(self, obj):
         if obj not in self.listener:

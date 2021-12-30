@@ -157,7 +157,7 @@ class Source:
         return self.__nowImage.get_rect()
 
     def copy(self):
-        obj = copy.deepcopy(self)
+        obj = copy.copy(self)
         obj.__images = obj.__images.copy()
         obj.__nowImage = obj.__images[0]
         return obj
@@ -255,10 +255,11 @@ class Mode:
         return rlt
 
     def copy(self):
+        print('fdfrrr')
         rect = self.__collideRect
         self.__collideRect = None
-        obj = copy.deepcopy(self)
-        obj.rect = rect.copy()
+        obj = copy.copy(self)
+        # obj.rect = rect.copy()
         self.__collideRect = rect
         return obj
 
@@ -284,6 +285,9 @@ class Mode:
     def is_interface(self):
         return self.__interface
 
+    def get_index(self):
+        return {}
+
     # def contains(self, pos):
     #     return
 
@@ -296,6 +300,9 @@ class ModeA(Mode):
         self.name = next(it)
 
         super(ModeA, self).__init__(it)
+
+    def get_index(self):
+        return [self.usage, self.flag, self.name]
 
 
 class ModeMaker:
@@ -314,6 +321,9 @@ class STUnit:
 
     def get(self):
         pass
+
+
+# class SS
 
 
 """unit"""
@@ -440,7 +450,7 @@ class Spirit:
         # print(self.__dict__)
         if self.__pen:
             self.__pen.blit(self.__suf, self.__anchor)
-            self.__suf.fill((0, 50, 0))
+            # self.__suf.fill((0, 50, 0))
             for i in self.__renderOrder:
                 self.__body[i].update(t0)
                 # print('update')
@@ -470,10 +480,11 @@ class Spirit:
         return self.__offsetSize
 
     def scale(self, pen=None, size=None):
+        if pen is not None:
+            self.set_pen(pen)
+
         if self.__offsetSize is not None:
-            if pen is not None:
-                self.set_pen(pen)
-            print(self.__offsetSize)
+            print(self.__offsetSize, 'not top')
 
             size = self.__pen.get_size()
             self.__suf = pygame.surface.Surface(
@@ -505,28 +516,23 @@ class Spirit:
     def get_layer(self):
         return self.__layer
 
-    # def swap_layer(self, obj, step):
-    #     for k, v in self.__body.items():
-    #         if v != obj:
-    #             continue
-    #         if k in self.__renderOrder:
-    #             id_ = self.__renderOrder.index(k)
-    #             if id_ + step < 0 or id_ + step >= len(self.__renderOrder):
-    #                 return id_
-    #             self.__renderOrder.pop(id_)
-    #             self.__renderOrder.insert(id_ + step, v)
-    #             return id_ + step
-    #     return -1
-
     def set_pen(self, pen):
         self.__pen = pen
 
     def copy(self):
         suf = self.__suf
+        body = self.__body
         self.__suf = None
-        obj = copy.deepcopy(self)
-        obj.__suf = suf
+        self.__body = None
+
+        obj = copy.copy(self)
+
+        obj.__suf = suf.copy()
         self.__suf = suf
+        obj.__body = {}
+        for k, v in body.items():
+            obj.__body[k] = v.copy(obj.__suf)
+        self.__body = body
         obj.__pen = None
         obj.__action = obj.__action.copy()
         return obj
@@ -537,7 +543,6 @@ class Spirit:
 
     def collide_point(self, pos):
         if self.contains(pos):
-            print('hrere')
             pos = pos[0] - self.__anchor[0], pos[1] - self.__anchor[1]
             for k in reversed(self.__renderOrder):
                 if self.__body[k].contains(pos):
@@ -556,7 +561,17 @@ class Spirit:
         return tmp_d
 
     def to_sequence(self):
-        pass
+        tmp_k = {
+                 'now_action': self.__nowAction,
+                 'action': self.__action,
+                 'track': self.__source.get_index()
+                 }
+        return tmp_k
+
+    def init_by_sequence(self, sq, pen):
+        self.__nowAction = sq['now_action']
+        self.__action = sq['action']
+        self.__pen = pen
 
 
 class Grid:
@@ -579,6 +594,7 @@ class UUnit(Spirit):
         self.moveTarget = None
         self.moveStep = 10
 
+        self.body = 10
         self.foot = ''
         self.sport = ''
         self.vitality = ''
@@ -620,7 +636,18 @@ class UnitMaker:
         print(obj, data)
         if obj is None:
             raise OSError
-        return Spirit(resManager.get(args=data))
+        return Spirit(obj)
+
+
+class UnitLoader:
+    @staticmethod
+    def load(sq, pen):
+        obj = resManager.get(args=sq['track'])
+        if obj is None:
+            raise OSError
+        obj = Spirit(obj)
+        obj.init_by_sequence(sq, pen)
+        return obj
 
 
 """mode adjuster"""
@@ -667,6 +694,8 @@ class ResManager:
         self.blockSize = 100, 100
 
         self.musicDrt = None
+        self.modeDrt = None
+        self.sourceDrt = None
 
         self.d = []
         self.index = {}
@@ -860,6 +889,7 @@ class ResManager:
                 tmp_d = tmp_d[i]
             tmp_d[track[-5]] = obj
 
+        self.sourceDrt = file_path
         # print('loaded', self.d, '\n', self.index)
 
         # if conf.has_option('action', 'mini_color'):
@@ -869,7 +899,10 @@ class ResManager:
         #         c0[i1] = int(i)
         #     obj.mini_color = tuple(c0[:3])
 
-    def load_modes(self, file_path, edit=False):
+    def load_modes(self, file_path, mode=0):
+        """
+        mode: 0: play, 1:source edit, 2: map edit
+        """
         if not self.d or not os.path.exists(file_path):
             return
         modes1 = {}
@@ -932,9 +965,11 @@ class ResManager:
                 else:
                     obj = UnitMaker.make(tracks)
 
-                if edit:
+                if mode == 1:
                     obj.edit_path = i + '/' + j
                     obj.edited = False
+                elif mode == 2:
+                    obj.edit_path = j.split('.')[0]
 
                 tmp_k1 = tmp_m
                 for k in tracks[:-7]:
@@ -952,16 +987,18 @@ class ResManager:
             # spirits.append()
             # it += 1
 
-        if not edit:
+        if mode == 2:
             for i in modes2:
                 for j in i:
                     if j.is_interface():
                         self.m.append(j)
             for k, v in modes1.items():
                 self.modes.update(v)
-        else:
+        elif mode == 1:
             self.m = modes2
             self.modes = modes1
+
+        self.modeDrt = file_path
 
     def save_modes(self, path, spirit, **kwargs):
         with open(path, 'r') as f:
@@ -985,8 +1022,6 @@ class ResManager:
         #         with open(path + '/' + j.edit_path, 'w') as f:
         #             json.dump(tmp_data, f)
 
-    def grading(self, file_path):
-        pass
     # def load_source(self, filepath: str, edit=False):
     #     filepath = filepath.replace('\\', '/')
     #
@@ -1224,7 +1259,7 @@ class ResManager:
                 return None
             rlt = rlt[i]
         else:
-            return rlt
+            return rlt.copy()
 
     def __find_by_ergodic(self, **kwargs):
         for i in self.d:
@@ -1283,7 +1318,7 @@ class ResManager:
                 return None
             rlt = rlt[i]
         # else:
-        return rlt.copy()
+        return rlt
 
     def __get_by_ergodic(self, **kwargs):
         for i in self.m:
@@ -1342,11 +1377,11 @@ if __name__ == '__main__':
         r1.load_source(r'C:\Users\暗夜\Desktop\workspace\frame1.0\source', True)
         r1
 
-    elif where == 'load_modes':
-        r1 = ResManager()
-        r1.load_source(r'E:\workspace\workspace\workspace\frame1.0\source', True)
-        print(r1.d, '\n', r1.index)
-        r1.load_modes(r'E:\workspace\workspace\workspace\frame1.0\modes')
-        print(r1.m)
-        for i in r1.m[0]:
-            print(i.__dict__)
+    # elif where == 'load_modes':
+    #     r1 = ResManager()
+    #     r1.load_source(r'E:\workspace\workspace\workspace\frame1.0\source', True)
+    #     print(r1.d, '\n', r1.index)
+    #     r1.load_modes(r'E:\workspace\workspace\workspace\frame1.0\modes')
+    #     print(r1.m)
+    #     for i in r1.m[0]:
+    #         print(i.__dict__)

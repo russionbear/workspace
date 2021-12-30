@@ -4,15 +4,15 @@ from .core import Core, Pen
 import pygame, os, json
 pygame.init()
 
-SOURCE_PATH = r'C:\Users\暗夜\Desktop\workspace\workspace\test\source'
-MODE_PATH = r'C:\Users\暗夜\Desktop\workspace\workspace\test\modes'
-
-# check
-
-
-resManager.load_source(SOURCE_PATH, True)
-print(resManager.m)
-resManager.load_modes(MODE_PATH, True)
+# SOURCE_PATH = r'C:\Users\暗夜\Desktop\workspace\workspace\test\source'
+# MODE_PATH = r'C:\Users\暗夜\Desktop\workspace\workspace\test\modes'
+#
+# # check
+#
+#
+# resManager.load_source(SOURCE_PATH, True)
+# print(resManager.m)
+# resManager.load_modes(MODE_PATH, True)
 
 
 class ModeAdjuster:
@@ -232,7 +232,9 @@ class ModeAdjuster:
 
     def save(self):
         if self.nowMode:
-            resManager.save_modes(MODE_PATH+'/'+self.modeName, self.nowMode)
+            resManager.save_modes(
+                resManager.modeDrt+'/'+self.modeName,
+                self.nowMode)
 
 
 class Flip(pygame.surface.Surface):

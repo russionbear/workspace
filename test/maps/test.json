@@ -1,0 +1,208 @@
+{
+    "background": null,
+    "border": [
+        0,
+        0
+    ],
+    "basic_layer": [
+        [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+        ],
+        [
+            null,
+            null,
+            {
+                "now_action": [
+                    "body",
+                    "stand"
+                ],
+                "action": {
+                    "body": "stand"
+                },
+                "track": [
+                    "unit",
+                    "red",
+                    "bigman"
+                ]
+            },
+            {
+                "now_action": [
+                    "body",
+                    "stand"
+                ],
+                "action": {
+                    "body": "stand"
+                },
+                "track": [
+                    "unit",
+                    "red",
+                    "bigman"
+                ]
+            },
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+        ],
+        [
+            null,
+            null,
+            {
+                "now_action": [
+                    "body",
+                    "stand"
+                ],
+                "action": {
+                    "body": "stand"
+                },
+                "track": [
+                    "unit",
+                    "red",
+                    "bigman"
+                ]
+            },
+            {
+                "now_action": [
+                    "body",
+                    "stand"
+                ],
+                "action": {
+                    "body": "stand"
+                },
+                "track": [
+                    "unit",
+                    "red",
+                    "bigman"
+                ]
+            },
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+        ],
+        [
+            null,
+            null,
+            {
+                "now_action": [
+                    "body",
+                    "stand"
+                ],
+                "action": {
+                    "body": "stand"
+                },
+                "track": [
+                    "unit",
+                    "red",
+                    "bigman"
+                ]
+            },
+            {
+                "now_action": [
+                    "body",
+                    "stand"
+                ],
+                "action": {
+                    "body": "stand"
+                },
+                "track": [
+                    "unit",
+                    "red",
+                    "bigman"
+                ]
+            },
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+        ],
+        [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+        ],
+        [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+        ],
+        [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+        ],
+        [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+        ],
+        [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+        ],
+        [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+        ]
+    ],
+    "spirits": {}
+}

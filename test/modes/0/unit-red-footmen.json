@@ -1,0 +1,29 @@
+{
+  "name": {
+    "body": "unit-flag-footmen-stand",
+    "nu": "tag-number-1"
+  },
+  "e-name": {
+
+  },
+  "action-body-stand": {
+    "layer": ["body", "nu"],
+    "offset_rate": [[0, 0], [50, 50]],
+    "offset_size": [[100, 100], [50, 50]],
+    "to": ["body"]
+  },
+  "action-body-move": {
+    "layer": ["body"],
+    "offset_rate": [[0, 0]],
+    "offset_size": [[100, 100]],
+    "to": ["body"]
+  },
+  "action-number-": {
+    "to": ["nu"]
+  },
+
+  "first_action": ["body", "stand"],
+  "collide_rect": [0, 0, 100, 100],
+  "mini_color": [13, 63, 79],
+  "interface": true
+}
