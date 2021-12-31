@@ -1,18 +1,10 @@
-from .resource import UnitMaker, resManager, Spirit
-from .core import Core, Pen
+from ..resource import UnitMaker, resManager
+from ..core import Core, Pen
 
 import pygame, os, json
 pygame.init()
 
-# SOURCE_PATH = r'C:\Users\暗夜\Desktop\workspace\workspace\test\source'
-# MODE_PATH = r'C:\Users\暗夜\Desktop\workspace\workspace\test\modes'
-#
-# # check
-#
-#
-# resManager.load_source(SOURCE_PATH, True)
-# print(resManager.m)
-# resManager.load_modes(MODE_PATH, True)
+# resManager = ResMngMaker.init('mode')
 
 
 class ModeAdjuster:
@@ -123,7 +115,7 @@ class ModeAdjuster:
                 #     self.gaped.set_offset_rate(pos)
         # scale
         elif e1.type == pygame.MOUSEBUTTONDOWN:
-            if e1.button == 5:
+            if e1.button == 4:
                 if not self.gaped:
                     if self.nowScalePoint + 1 >= len(self.scaleList):
                         return
@@ -133,7 +125,7 @@ class ModeAdjuster:
                     size = self.gaped.get_offset_size()
                     size = size[0] + 1, size[1] + 1
                     self.gaped.set_offset_size(size)
-            elif e1.button == 4:
+            elif e1.button == 5:
                 if not self.gaped:
                     if self.nowScalePoint - 1 < 0:
                         return
@@ -185,11 +177,16 @@ class ModeAdjuster:
         self.point_now = (step+self.point_all+self.point_now) % self.point_all
 
         now = self.point_now
-        for i in resManager.m:
+        for i1, i in enumerate(resManager.m):
             if len(i) <= now:
                 now -= len(i)
             else:
-                self.nowMode = Spirit(i[now], self.suf)
+                # self.nowMode = Spirit(i[now], self.suf)
+                print(i[now])
+                key = i[now].get_index()
+                key.insert(0, str(i1))
+                self.nowMode = UnitMaker.make(key)
+                self.nowMode.set_pen(self.suf)
                 self.actions = self.nowMode.get_all_actions()
                 self.now_action = 0
                 self.swap_action(0)

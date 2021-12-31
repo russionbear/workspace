@@ -20,34 +20,8 @@
         [
             null,
             null,
-            {
-                "now_action": [
-                    "body",
-                    "stand"
-                ],
-                "action": {
-                    "body": "stand"
-                },
-                "track": [
-                    "unit",
-                    "red",
-                    "bigman"
-                ]
-            },
-            {
-                "now_action": [
-                    "body",
-                    "stand"
-                ],
-                "action": {
-                    "body": "stand"
-                },
-                "track": [
-                    "unit",
-                    "red",
-                    "bigman"
-                ]
-            },
+            null,
+            null,
             null,
             null,
             null,
@@ -69,72 +43,9 @@
                 "track": [
                     "unit",
                     "red",
-                    "bigman"
+                    "footmen"
                 ]
             },
-            {
-                "now_action": [
-                    "body",
-                    "stand"
-                ],
-                "action": {
-                    "body": "stand"
-                },
-                "track": [
-                    "unit",
-                    "red",
-                    "bigman"
-                ]
-            },
-            null,
-            null,
-            null,
-            null,
-            null,
-            null
-        ],
-        [
-            null,
-            null,
-            {
-                "now_action": [
-                    "body",
-                    "stand"
-                ],
-                "action": {
-                    "body": "stand"
-                },
-                "track": [
-                    "unit",
-                    "red",
-                    "bigman"
-                ]
-            },
-            {
-                "now_action": [
-                    "body",
-                    "stand"
-                ],
-                "action": {
-                    "body": "stand"
-                },
-                "track": [
-                    "unit",
-                    "red",
-                    "bigman"
-                ]
-            },
-            null,
-            null,
-            null,
-            null,
-            null,
-            null
-        ],
-        [
-            null,
-            null,
-            null,
             null,
             null,
             null,
@@ -148,7 +59,83 @@
             null,
             null,
             null,
+            {
+                "now_action": [
+                    "body",
+                    "stand"
+                ],
+                "action": {
+                    "body": "stand"
+                },
+                "track": [
+                    "unit",
+                    "red",
+                    "footmen"
+                ]
+            },
             null,
+            null,
+            null,
+            null,
+            null
+        ],
+        [
+            null,
+            null,
+            null,
+            null,
+            null,
+            {
+                "now_action": [
+                    "body",
+                    "stand"
+                ],
+                "action": {
+                    "body": "stand"
+                },
+                "track": [
+                    "unit",
+                    "red",
+                    "footmen"
+                ]
+            },
+            null,
+            null,
+            null,
+            null
+        ],
+        [
+            null,
+            null,
+            null,
+            {
+                "now_action": [
+                    "body",
+                    "stand"
+                ],
+                "action": {
+                    "body": "stand"
+                },
+                "track": [
+                    "unit",
+                    "red",
+                    "footmen"
+                ]
+            },
+            {
+                "now_action": [
+                    "body",
+                    "stand"
+                ],
+                "action": {
+                    "body": "stand"
+                },
+                "track": [
+                    "unit",
+                    "red",
+                    "footmen"
+                ]
+            },
             null,
             null,
             null,

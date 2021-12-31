@@ -450,7 +450,7 @@ class Spirit:
         # print(self.__dict__)
         if self.__pen:
             self.__pen.blit(self.__suf, self.__anchor)
-            # self.__suf.fill((0, 50, 0))
+            self.__suf.fill((0, 50, 0))
             for i in self.__renderOrder:
                 self.__body[i].update(t0)
                 # print('update')
@@ -589,10 +589,10 @@ class UBuild(Spirit):
 
 
 class UUnit(Spirit):
+
     def __init__(self, mode, pen):
         super(UUnit, self).__init__(mode, pen, layer=3)
-        self.moveTarget = None
-        self.moveStep = 10
+        self.moveNowTarget = None
 
         self.body = 10
         self.foot = ''
@@ -603,30 +603,10 @@ class UUnit(Spirit):
         self.atk = ''
         self.bullet = 0
         self.convey = ''
+        self.oil = 0
 
-    def auto_move(self):
-        if self.moveTarget:
-            pos1 = self.get_pos()
-            d1 = self.moveTarget[0] - pos1[0], self.moveTarget[1] - pos1[1]
-            distance = (d1[0]**2+d1[1]**2)**0.5
-            size = self.get_size()
-            step = self.moveStep * size[0] / 100
-            if distance <= step:
-                self.move(pos=self.moveTarget)
-                self.moveTarget = None
-                return True
-            else:
-                n = step / distance
-                d1 = int(d1[0]*n) + pos1[0], int(d1[1]*n) + pos1[1]
-                self.move(pos=d1)
-                # return False
-            # end = pos1[0] - self.moveTarget[0], pos1[1] - self.moveTarget[1]
-            # pos = pos1[0] + self.moveStep[0] * size[0] // 100, \
-            #     pos1[1] + self.moveStep[1] * size[1] // 100
-            # self.move(pos=pos)
-
-    def set_move_target(self, tgt):
-        self.moveTarget = tgt
+        self.restStep = 2
+        self.isMoved = True
 
 
 class UnitMaker:
@@ -657,39 +637,10 @@ class ModeAdjuster:
     pass
 
 
-"""map render"""
-
-
-class MapRender:
-    def __init__(self, block_size, rl):
-        self.blockSize = block_size
-        self.rl = rl
-        self.bgImage = None
-        self.basicLayer: List[List[Spirit]] = []
-        self.spirits: Dict[tuple: Spirit] = {}
-
-    # def update(self, t0):
-    #     if self.bgImage:
-    #         pass
-    #     for k, v in self.spirits.items():
-
-    def get_bg(self):
-        return self.bgImage
-
-    def get(self, layer, x=0, y=0, pos=None) -> Spirit:
-        pass
-
-    def remove(self, pos=None, obj=None):
-        pass
-
-    def add(self, pos, obj):
-        pass
-
-
 """resource manager"""
 
 
-class ResManager:
+class ResMng:
     def __init__(self):
         self.blockSize = 100, 100
 
@@ -745,7 +696,7 @@ class ResManager:
             if os.path.exists(root + '/' + i):
                 shutil.rmtree(root + '/' + i)
             os.mkdir(root + '/' + i)
-            ResManager.make_action(root + '/' + i, i.split('-')[-1], font_path, font_size)
+            ResMng.make_action(root + '/' + i, i.split('-')[-1], font_path, font_size)
         conf = configparser.ConfigParser()
         conf.add_section('setting')
         conf.set('setting', 'block_width', str(50))
@@ -772,7 +723,7 @@ class ResManager:
 
         wash(tree)
 
-        ResManager.make_test_source(root, rlt, font_path, font_size)
+        ResMng.make_test_source(root, rlt, font_path, font_size)
 
     def load_music(self, path):
         pass
@@ -987,7 +938,7 @@ class ResManager:
             # spirits.append()
             # it += 1
 
-        if mode == 2:
+        if mode == 2 or mode == 0:
             for i in modes2:
                 for j in i:
                     if j.is_interface():
@@ -1333,49 +1284,108 @@ class ResManager:
                 # return i.copy()
         return None
 
-    # def get_source(self, action, root):
-    #     rlt = self.index
-    #     for i in root:
-    #         rlt = rlt[i]
-    #     obj = Source(self, action, rlt[action]['images'], root)
-    #     return obj
 
+# class ResMngAdj(ResMng):
+#     def save_modes(self, path, spirit, **kwargs):
+#         with open(path, 'r') as f:
+#             tmp_d = json.load(f)
+#         tmp_dd = spirit.to_json()
+#         for k, v in tmp_dd.items():
+#             tmp_d[k] = v
+#         with open(path, 'w') as f:
+#             json.dump(tmp_d, f)
+#         pass
+#         # for i in self.m:
+#         #     for j in i:
+#         #         if not j.edited:
+#         #             continue
+#         #         with open(path + '/' + j.edit_path, 'r') as f:
+#         #             tmp_data = json.load(f)
+#         #         j.edited = False
+#         #         tmp_d = j.to_json()
+#         #         for k, v in tmp_d.items():
+#         #             tmp_data[k] = v
+#         #         with open(path + '/' + j.edit_path, 'w') as f:
+#         #             json.dump(tmp_data, f)
+#
+#     def __get_by_index(self, *args):
+#         rlt = self.modes
+#         for i in args:
+#             if i not in rlt:
+#                 return None
+#             rlt = rlt[i]
+#         # else:
+#         return rlt
+#
+#     def __get_by_ergodic(self, **kwargs):
+#         for i in self.m:
+#             for k, v in kwargs.items():
+#                 if k in i.__dict__:
+#                     if i.__dict__[k] != v:
+#                         break
+#                 # else:
+#                 #     break
+#             else:
+#                 return i
+#                 # return i.copy()
+#         return None
+#
+#
+# class ResMngEditMap(ResMng):
+#     pass
+#
+#
+# class ResMngShow(ResMng):
+#     pass
+#
+#
+# class ResMngMaker:
+#     value = None
+#     key = None
+#
+#     @classmethod
+#     def init(cls, d0):
+#         if d0 == cls.key:
+#             return cls.value
+#         if d0 == 'show':
+#             obj = ResMngShow()
+#         elif d0 == 'edit':
+#             obj = ResMngEditMap()
+#         elif d0 == 'mode':
+#             obj = ResMngAdj()
+#         cls.value = obj
+#         return obj
+#
 
-class MapChecker:
-    pass
-
-
-resManager = ResManager()
-
-# resManager.get().
+resManager = ResMng()
 
 
 if __name__ == '__main__':
     where = 'load_modes'
-    if where == 'make_source':
-        dd2 = r'C:\Users\暗夜\Desktop\workspace\frame1.0\source'
-        # dd3 = ['geo-tree-stand', 'unit-red-man-left',
-        #        'unit-red-man-right', 'unit-red-man-up',
-        #        'unit-red-man-low']
-        dd3 = {
-            "geo": {
-                "tree": ['stand']
-            },
-            "unit": {
-                "flag": {"footmen": ['stand', 'move', 'fly']}
-            },
-            "tag": {
-                "number": [str(i) for i in range(1, 11)]
-            }
-        }
-        ResManager.make_test_source_by_tree(r'C:\Users\暗夜\Desktop\workspace\frame1.0\source',
-                                            dd3,
-                                            r'E:\Date_code\py_data\yazha_1\msyh.ttc')
-
-    elif where == 'test':
-        r1 = ResManager()
-        r1.load_source(r'C:\Users\暗夜\Desktop\workspace\frame1.0\source', True)
-        r1
+    # if where == 'make_source':
+    #     dd2 = r'C:\Users\暗夜\Desktop\workspace\frame1.0\source'
+    #     # dd3 = ['geo-tree-stand', 'unit-red-man-left',
+    #     #        'unit-red-man-right', 'unit-red-man-up',
+    #     #        'unit-red-man-low']
+    #     dd3 = {
+    #         "geo": {
+    #             "tree": ['stand']
+    #         },
+    #         "unit": {
+    #             "flag": {"footmen": ['stand', 'move', 'fly']}
+    #         },
+    #         "tag": {
+    #             "number": [str(i) for i in range(1, 11)]
+    #         }
+    #     }
+    #     ResManager.make_test_source_by_tree(r'C:\Users\暗夜\Desktop\workspace\frame1.0\source',
+    #                                         dd3,
+    #                                         r'E:\Date_code\py_data\yazha_1\msyh.ttc')
+    #
+    # elif where == 'test':
+    #     r1 = ResManager()
+    #     r1.load_source(r'C:\Users\暗夜\Desktop\workspace\frame1.0\source', True)
+    #     r1
 
     # elif where == 'load_modes':
     #     r1 = ResManager()

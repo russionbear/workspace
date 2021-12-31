@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
-# @FileName  :city.py
-# @Time      :2021/12/19 10:18
+# @FileName  :menu.py
+# @Time      :2021/12/31 16:39
 # @Author    :russionbear
 
 
 if __name__ == "__main__":
-    d0 = {'1': 1}
-    print(d0.keys()[0])
+    pass

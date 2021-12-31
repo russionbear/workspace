@@ -89,10 +89,13 @@ class _Consigner:
         self.signs = Queue(128)
         self.overed = False
 
-    def run(self):
-        while not self.overed:
-            cur = self.signs.get()
-            self.begins[cur].slots(cur[1])
+    def update(self):
+        while not self.signs.empty():
+            pass
+    # def run(self):
+    #     while not self.overed:
+    #         cur = self.signs.get()
+    #         self.begins[cur].slots(cur[1])
 
     def register(self, begin, end, type_):
         cur = (begin, type_)
