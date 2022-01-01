@@ -1,18 +1,22 @@
 # coding:utf-8
-from standard.resource import resManager
-from standard.core import Core
-from standard.mapEditor.madjuster import ModeAdjuster
-from standard.mapEditor.bgEditor import MainView
-from standard.mapEditor.blockEditor import BlockEditWin
-from standard.mapEditor.win import WinStrategyEditor
-
-from PyQt5.Qt import QApplication
-from PyQt5 import QtCore, QtGui
-import sys, functools, time, hashlib, shutil, re
+# from standard.resource import resManager
+# from standard.core import Core
+# from standard.mapEditor.madjuster import ModeAdjuster
+# from standard.mapEditor.bgEditor import MainView
+# from standard.mapEditor.blockEditor import BlockEditWin
+# from standard.mapEditor.win import WinStrategyEditor
+# from standard.menu import TestWin
+#
+# from PyQt5.Qt import QApplication
+# from PyQt5 import QtCore, QtGui
+# import sys, functools, time, hashlib, shutil, re
+# import pygame
 
 # resManager = ResMngMaker.init('mode')
-resManager.load_source('../test/source', False)
-resManager.load_modes('../test/modes')
+
+# resManager.load_source('../test/source', False)
+# resManager.load_modes('../test/modes')
+
 # print(resManager.m[0].edit_path)
 # print(resManager.d)
 
@@ -21,14 +25,6 @@ resManager.load_modes('../test/modes')
 # exit()
 
 # Core.add(MainView(r'E:\TMP\policyGame'))
-# Core.run()
-
-# from .setting import strategy_map_type
-
-
-# Core.add(BlockEditor(strategy_map_type['winSize'],
-#                      strategy_map_type['blockSize'],
-#                      strategy_map_type['mapSize']))
 # Core.run()
 
 # Qapp = QApplication(sys.argv)
@@ -55,4 +51,9 @@ resManager.load_modes('../test/modes')
 # sys.exit(Qapp.exec_())
 
 # Core.add(BlockEditor((800, 600), MapSurf(None, (50, 50)), ''))
+# Core.run()
+
+# s0 = r'E:\workspace\workspace\test\images.jpg'
+# resManager.load_menu_source('../test/menu')
+# Core.add(TestWin((600, 400), 'images'))
 # Core.run()

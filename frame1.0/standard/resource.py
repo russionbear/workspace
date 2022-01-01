@@ -10,6 +10,7 @@ import random
 from threading import Thread
 from PIL import Image, ImageDraw, ImageFont
 from typing import List, Dict
+import xlrd
 
 pygame.mixer.init()
 
@@ -288,6 +289,9 @@ class Mode:
     def get_index(self):
         return {}
 
+    def get_flag(self):
+        pass
+
     # def contains(self, pos):
     #     return
 
@@ -304,23 +308,14 @@ class ModeA(Mode):
     def get_index(self):
         return [self.usage, self.flag, self.name]
 
+    def get_flag(self):
+        return self.flag
+
 
 class ModeMaker:
     @staticmethod
     def make(data):
         return ModeA(data)
-
-
-"""setting manager"""
-
-
-class STUnit:
-    @classmethod
-    def load(cls, path):
-        pass
-
-    def get(self):
-        pass
 
 
 # class SS
@@ -516,6 +511,9 @@ class Spirit:
     def get_layer(self):
         return self.__layer
 
+    def get_flag(self):
+        return self.__source.get_flag()
+
     def set_pen(self, pen):
         self.__pen = pen
 
@@ -581,6 +579,13 @@ class Grid:
 class UGeo(Spirit):
     def __init__(self, mode, pen):
         super(UGeo, self).__init__(mode, pen)
+        self.geo = STUnit.get_key(mode.get_index(), 're_geo')
+
+    def get_geo(self):
+        return self.geo
+
+    # def get_geo(self):
+    #     return self.geo
 
 
 class UBuild(Spirit):
@@ -592,20 +597,18 @@ class UUnit(Spirit):
 
     def __init__(self, mode, pen):
         super(UUnit, self).__init__(mode, pen, layer=3)
-        self.moveNowTarget = None
 
+        index = mode.get_index()
         self.body = 10
-        self.foot = ''
-        self.sport = ''
-        self.vitality = ''
-        self.dayCost = ''
-        self.eye = ''
-        self.atk = ''
-        self.bullet = 0
-        self.convey = ''
-        self.oil = 0
+        self.foot = STUnit.get_key(index, 're_foot')
+        self.eye = STUnit.get_key(index, 're_eye')
+        self.atk = STUnit.get_key(index, 're_atk')
+        self.bullet = STUnit.get_key(index, 'v_top_bullet')
+        self.oil = STUnit.get_key(index, 'v_top_oil')
 
-        self.restStep = 2
+        self.convey = STUnit.get_key(index, 'convey')
+
+        self.restStep = STUnit.get_key(index, 'v_day_cost')
         self.isMoved = True
 
 
@@ -628,6 +631,74 @@ class UnitLoader:
         obj = Spirit(obj)
         obj.init_by_sequence(sq, pen)
         return obj
+
+
+"""setting manager"""
+
+
+class STUnit:
+    Data = None
+    Move = {}
+    Convey = {}
+    Atk = {}
+    AtkValue = {}
+    Officer = {}
+
+    @classmethod
+    def load(cls, path):
+        cls.Data = xlrd.open_workbook(path)
+        cls.Move = cls.sheet_to_json(cls.Data.sheet_by_name('move'))
+        cls.Convey = cls.sheet_to_json(cls.Data.sheet_by_name('convey'))
+        for k, v in cls.Convey.items():
+            del v['re']
+
+        cls.Atk = cls.sheet_to_json(cls.Data.sheet_by_name('re_atk'))
+        for k, v in cls.Atk.items():
+            del v['re']
+        cls.AtkValue = cls.sheet_to_json(cls.Data.sheet_by_name('atk'))
+        cls.Officer = cls.sheet_to_json(cls.Data.sheet_by_name('officer'))
+
+    @classmethod
+    def get_key(cls, s0, type_):
+        table = cls.Data.sheet_by_name(type_)
+        s0 = '-'.join(s0)
+        res = table.col_values(2, 2)
+        for i1, i in enumerate(res):
+            if re.match(i, s0) is not None:
+                return table.col_values(1, i1+2)
+        return None
+
+    @staticmethod
+    def sheet_to_json(table):
+        tmp_d = {}
+        keys = table.row_values(0)
+
+        for i in range(1, table.nrows):
+            d0 = {}
+            for j in range(1, table.ncols):
+                d0[keys[j]] = table.cell_value(i, j)
+            tmp_d[table.cell_value(i, 0)] = d0
+        return tmp_d
+
+    @classmethod
+    def get_move(cls, foot, geo):
+        return cls.Move[foot][geo]
+
+    @classmethod
+    def get_convey(cls, key):
+        return cls.Convey[key]['max'], cls.Convey['key']['type']
+
+    @classmethod
+    def get_atk(cls, key, atr):
+        return cls.Atk[key][atr]
+
+    @classmethod
+    def get_atk_value(cls, ak, df):
+        return cls.AtkValue[ak][df]
+
+    @classmethod
+    def get_officer(cls, name, atr):
+        return cls.Officer[name][atr]
 
 
 """mode adjuster"""
@@ -655,6 +726,8 @@ class ResMng:
 
         self.m = []
         self.modes = {}
+
+        self.menuImages = {}
 
         # self.basicSprite = set()
         # self.layers = {}
@@ -950,6 +1023,11 @@ class ResMng:
             self.modes = modes1
 
         self.modeDrt = file_path
+
+    def load_menu_source(self, path):
+        for i in os.listdir(path):
+            name = i.split('.')[0]
+            self.menuImages[name] = pygame.image.load(path+'/'+i)
 
     def save_modes(self, path, spirit, **kwargs):
         with open(path, 'r') as f:
@@ -1283,6 +1361,9 @@ class ResMng:
                 return i
                 # return i.copy()
         return None
+
+    def get_menu_image(self, name):
+        return self.menuImages[name]
 
 
 # class ResMngAdj(ResMng):

@@ -6,8 +6,9 @@
 
 
 from typing import Dict, List
-from .resource import UnitMaker, resManager, Spirit, UnitLoader
+from .resource import UnitMaker, resManager, Spirit, UGeo, UnitLoader, STUnit
 from .core import Core, Pen
+from .menu import Menu
 
 import pygame, os, json
 
@@ -36,7 +37,7 @@ class MapRender:
 
         self.backGround = None
         self.border = 0, 0
-        self.basicLayer: List[List[Spirit]] = []
+        self.basicLayer: List[List[Spirit | UGeo]] = []
         self.spirits: Dict[...:tuple:Spirit] = {}
 
         size = block_size
@@ -222,6 +223,7 @@ class MapEditRender(MapRender):
         super(MapEditRender, self).load_map(path)
 
         self.scale(-1)
+        self.scale(1)
 
     def to_sequence(self):
         return super(MapEditRender, self).to_sequence()
@@ -314,9 +316,16 @@ class MapShowRender(MapRender):
     def __init__(self, pen, size):
         super(MapShowRender, self).__init__(pen, size)
         self.motor = Motor()
+        self.__areaShowed = []
 
     def update(self):
         self.motor.update(super(MapShowRender, self).update())
+        if self.__areaShowed:
+            for i in self.__areaShowed:
+                pygame.draw.rect(
+                    self.suf, i[2:],
+                    self.get(1, i[0], i[1]).get_rect(),
+                    3)
 
     def get(self, layer, x=0, y=0, pos=None) -> Spirit:
         if pos is not None:
@@ -327,9 +336,48 @@ class MapShowRender(MapRender):
             if (x, y) in self.spirits[layer]:
                 return self.spirits[layer][(x, y)]
 
+    def add_show_area(self, a0, color=(0, 255, 122)):
+        for i in a0:
+            self.__areaShowed.append(i+color)
 
-class MapMenu:
-    pass
+    def clear_show_area(self):
+        self.__areaShowed.clear()
+
+    def contains_show_area(self, pos, re_obj=True):
+        for i in self.__areaShowed:
+            obj = self.get(1, i[0], i[1])
+            if obj.contains(pos):
+                if re_obj:
+                    return obj
+                return i
+
+    def event(self, e1):
+        if e1.type == pygame.MOUSEBUTTONDOWN:
+            pass
+        elif e1.type == pygame.MOUSEMOTION:
+            pass
+
+        elif e1.type == pygame.MOUSEBUTTONUP:
+            pass
+
+        elif e1.type == pygame.KEYDOWN:
+            if e1.key == pygame.K_LCTRL:
+                self.keyCtrlDown = True
+        elif e1.type == pygame.KEYUP:
+            if e1.key == pygame.K_LCTRL:
+                self.keyCtrlDown = False
+
+    def slot(self, type_, **kwargs):
+        pass
+
+    def get_rect(self):
+        return self.suf.get_rect()
+
+    def get_pos(self):
+        return self.anchor
+
+    def get_size(self):
+        return self.suf.get_size()
 
 
 class Motor:
@@ -384,7 +432,298 @@ class Motor:
             return False
 
 
-class Scientist:
+class User:
+    def __init__(self, flag):
+        self.__flag = flag
+        self.__enemy = set()
+
+    def get_flag(self):
+        return self.__flag
+
+    def is_enemy(self, flag):
+        return flag in self.__enemy
+
+
+class MathMan:
+    costMap = None
+    areaMap = None
+    roads = []
+
+    @classmethod
+    def count_cost(cls,
+                   render: MapShowRender,
+                   foot,
+                   user: User,
+                   spirit_layer=3,
+                   top=9999):
+        """-1:error, -2:不可停留， -3：运输车"""
+        tmp_map = []
+        for i in render.basicLayer:
+            l0 = []
+            for j in i:
+                if j is None:
+                    key = 'None'
+                else:
+                    key = j.get_geo()
+                nu = STUnit.get_move(foot, key)
+                if nu == -1:
+                    nu = top
+                l0.append(nu)
+            tmp_map.append(l0)
+        if spirit_layer in render.spirits:
+            for k, v in render.spirits[spirit_layer].items():
+                if tmp_map[k[1]][k[0]] == -1:
+                    continue
+                if user.is_enemy(v.get_flag):
+                    tmp_map[k[1]][k[0]] = top
+        cls.costMap = tmp_map
+        return tmp_map
+
     @staticmethod
-    def aaa():
-        pass
+    def count_atk_area(render: MapShowRender, xy, layer):
+        x1, y1 = xy
+        rows = len(render.basicLayer)
+        cols = len(render.basicLayer[0])
+        directions = [(1, 1), (-1, 1), (-1, -1), (1, -1)]
+        s0 = render.get(layer, pos=xy)
+        max_ = STUnit.get_atk(s0.atk, 'max')
+        min_ = STUnit.get_atk(s0.atk, 'min')
+        rlt = []
+        for k in range(int(min_), int(max_) + 1):
+            for j in range(k + 1):
+                for i in directions:
+                    x, y = x1 + j * i[0], y1 + (k - j) * i[1]
+                    if x < 0 or x >= rows or y < 0 or y >= cols or ((x, y) in rlt):
+                        continue
+                    rlt.append((x, y))
+
+        return rlt
+
+    # def suppliesCount(self):
+    #     dwName = None
+    #     geoName = None
+    #     if self.dwChoosed.track['name'] == 'transport':
+    #         dwName = 'transport'
+    #         geoName = 'factory'
+    #     elif self.dwChoosed.track['name'] == 'transportship':
+    #         dwName = 'transportship'
+    #         geoName = 'shipyard'
+    #
+    #     e1 = []
+    #     e2 = []
+    #     for i in self.findChildren(Geo):
+    #         if i.track['usage'] == 'build':
+    #             if i.track['flag'] == self.user['flag'] and \
+    #                     i.track['name'] == geoName:
+    #                 e1.append(i)
+    #     for i in self.findChildren(DW):
+    #         if i.track['flag'] == self.user['flag'] and \
+    #                 i.track['name'] == dwName and \
+    #                 not i.moved:
+    #             e2.append(i)
+    #     if not e2 or not e1:
+    #         print('here', e1, e2)
+    #         return False
+    #     tem_data_1 = {}
+    #     for i1, i in enumerate(e2):
+    #         costMap = self.costAreaCount(i)
+    #         tem_data_1[str(i1)] = {'dws': [], 'geos': []}
+    #         for j1, j in enumerate(e2):
+    #             if j1 == i1:
+    #                 continue
+    #             roads = self.roadCount(i, j.mapId, costMap)
+    #             if roads:
+    #                 cost = resource.basicData['move'][self.dwChoosed.track['name']]['move_distance']
+    #                 oil = float(cost) if float(cost) <= self.dwChoosed.oil else self.dwChoosed.oil
+    #                 for k in roads[0][1:]:
+    #                     oil -= float(resource.basicData['move'][self.dwChoosed.track['name']][
+    #                                      self.pointer_geo[k[0]][k[1]].track['name']])
+    #                 if oil < 0:
+    #                     continue
+    #             else:
+    #                 continue
+    #             tem_data_1[str(i1)]['dws'].append((str(j1), len(roads[0])))
+    #         for j1, j in enumerate(e1):
+    #             roads = self.roadCount(i, j.mapId, costMap)
+    #             if roads:
+    #                 cost = resource.basicData['move'][self.dwChoosed.track['name']]['move_distance']
+    #                 oil = float(cost) if float(cost) <= self.dwChoosed.oil else self.dwChoosed.oil
+    #                 for k in roads[0][1:]:
+    #                     oil -= float(resource.basicData['move'][self.dwChoosed.track['name']][
+    #                                      self.pointer_geo[k[0]][k[1]].track['name']])
+    #                 if oil < 0:
+    #                     continue
+    #             else:
+    #                 continue
+    #             tem_data_1[str(i1)]['geos'].append((str(j1), len(roads[0])))
+    #         # tem_data_1[str(i1)]['dws'] = sorted(tem_data_1[str(i1)]['dws'], key=lambda arg:arg[1])
+    #         tem_data_1[str(i1)]['geos'] = sorted(tem_data_1[str(i1)]['geos'], key=lambda arg: arg[1])
+    #     end = []
+    #
+    #     def supplyRoad(point, cache=[]):
+    #         here_cache = cache[:]
+    #         if point not in cache:
+    #             here_cache.append(point)
+    #         else:
+    #             return
+    #         if tem_data_1[point]['geos']:
+    #             here_cache.append(tem_data_1[point]['geos'][0][0])
+    #             end.append(here_cache)
+    #             return
+    #         for i in tem_data_1[point[0]]['dws']:
+    #             supplyRoad(i[0], here_cache)
+    #
+    #     for i1, i in enumerate(e2):
+    #         if i == self.dwChoosed:
+    #             supplyRoad(str(i1))
+    #             break
+    #     if not end:
+    #         return False
+    #     tend = []
+    #     for i in end:
+    #         for j in i[:-1]:
+    #             tend.append(e2[int(j)].mapId)
+    #             # print(e2[int(j)].mapId, end='')
+    #         tend.append(e1[int(i[-1])].mapId)
+    #         # print('\n', e1[int(i[-1])].mapId)
+    #     self.planToSupply = tend
+    #     return True
+
+    @classmethod
+    def count_area(cls, cost_map, xy, oil_):
+        rows = len(cost_map)
+        cols = len(cost_map[0])
+        tem_area = [[-1 for i in range(cols)] for j in range(rows)]
+        directions = [(1, 0), (-1, 0), (0, -1), (0, 1)]
+
+        def area(begin_p, oil):
+            tem_area[begin_p[0]][begin_p[1]] = oil
+            for i in directions:
+                x, y = begin_p[0] + i[0], begin_p[1] + i[1]
+                if x < 0 or x >= rows or y < 0 or y >= cols:
+                    continue
+                if tem_area[x][y] == -1 and oil - cost_map[x][y] >= 0:
+                    area((x, y), oil - cost_map[x][y])
+                elif tem_area[x][y] != -1 and oil - cost_map[x][y] > tem_area[x][y]:
+                    area((x, y), oil - cost_map[x][y])
+
+        area(xy, oil_)
+        # for i in tem_area:
+        #     for j in i:
+        #         print(j, ' ', end='')
+        #     print()
+        cls.areaMap = tem_area
+        return tem_area
+
+    @classmethod
+    def count_roads(cls, cost_map, xy, last, oil):
+        cols = len(cost_map[0])
+        rows = len(cost_map)
+        directions = [(1, 0), (-1, 0), (0, -1), (0, 1)]
+        end = []
+
+        def road(begin_p, end_p, length, has_go=None):
+            if has_go is None:
+                has_go = []
+            has_go_ = has_go[:]
+            # length_ = length - cost_map[begin_p[0]][begin_p[1]]
+            has_go_.append((begin_p[0], begin_p[1]))
+            if length < 0:
+                return
+            if begin_p[0] == end_p[0] and begin_p[1] == end_p[1]:
+                end.append(has_go_[:])
+                return
+            for i in directions:
+                x, y = begin_p[0] + i[0], begin_p[1] + i[1]
+                if x < 0 or x >= rows or y < 0 or y >= cols:
+                    continue
+                if (x, y) not in has_go:
+                    length_ = length - cost_map[x][y]
+                    road((x, y), end_p, length_, has_go_)
+
+        road(xy, last, oil)
+
+        end.sort(key=lambda arg: len(arg))
+        cls.roads = end
+
+        return cls.roads
+
+
+class CtrlWin:
+    def __init__(self, win_size, map_path, block_size=(50, 50)):
+        self.suf = pygame.display.set_mode(win_size)
+        self.legalEvents = {pygame.MOUSEBUTTONDOWN,
+                            pygame.MOUSEBUTTONUP,
+                            pygame.MOUSEMOTION,
+                            pygame.KEYDOWN,
+                            pygame.KEYUP}
+        self.menu = Menu(self.suf)
+        self.center = MapShowRender(self.suf, block_size)
+        self.center.load_map(map_path)
+
+        self.__moveDirection = None
+        self.__moveSpeed = 1
+        size = self.center.get_size()
+        self.__canMove = win_size[0] < size[0], win_size[1] < size[1]
+        self.keyCtrlDown = False
+
+    def update(self):
+        if self.menu:
+            self.menu.update()
+        self.center.update()
+        if self.__moveDirection is not None:
+            pos = self.center.get_pos()
+            size = self.center.get_size()
+            size1 = self.suf.get_size()
+            pos = pos[0] + self.__moveDirection[0] * self.__moveSpeed if self.__canMove[0] else 0, \
+                pos[1] + self.__moveDirection[1] * self.__moveSpeed if self.__canMove[1] else 0
+            x, y = pos
+            if self.__canMove[0]:
+                if pos[0] > 0:
+                    x = 0
+                elif pos[0] + size[0] < size1[0]:
+                    x = size1[0] - size[0]
+            if self.__canMove[1]:
+                if pos[1] > 0:
+                    y = 0
+                elif pos[1] + size[1] < size1[1]:
+                    y = size1[1] - size[1]
+            if pos[0] == x and pos[1] == y:
+                self.__moveDirection = None
+            self.center.move(x, y)
+
+    def event(self, e1):
+        if e1.type == pygame.MOUSEBUTTONDOWN:
+            if e1.button == 1:
+                pass
+            elif e1.button == 3:
+                pass
+        elif e1.type == pygame.MOUSEMOTION:
+            x = y = 0
+            _border = 25
+            size1 = self.suf.get_size()
+            if e1.pos[0] < _border:
+                x = -1
+            elif e1.pos[0] + _border > size1[0]:
+                x = 1
+            if e1.pos[1] < _border:
+                y = -1
+            elif e1.pos[1] + _border > size1[1]:
+                y = 1
+            if x != 0 or y != 0:
+                self.__moveDirection = x, y
+            else:
+                self.__moveDirection = None
+
+        elif e1.type == pygame.MOUSEBUTTONUP:
+            if e1.button == 1:
+                pass
+            elif e1.button == 3:
+                pass
+
+        elif e1.type == pygame.KEYDOWN:
+            if e1.key == pygame.K_LCTRL:
+                self.keyCtrlDown = True
+        elif e1.type == pygame.KEYUP:
+            if e1.key == pygame.K_LCTRL:
+                self.keyCtrlDown = False

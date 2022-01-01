@@ -1,4 +1,5 @@
-
+/test
+/frame1.0/test*.py
 *.pyc
 .idea
 
