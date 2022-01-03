@@ -71,6 +71,15 @@ class _Pen:
         self.font = "arial"
         self.size = 30
         self.pen = pygame.font.SysFont(self.font, self.size)
+        self.__pens = {}
+
+    def make_pen(self, size, font):
+        k0 = (size, hash(font))
+        if k0 in self.__pens:
+            return self.__pens[k0]
+        obj = pygame.font.SysFont(self.font, self.size)
+        self.__pens[k0] = obj
+        return obj
 
     def set(self, size=None, font=None):
         if size:
@@ -81,6 +90,9 @@ class _Pen:
 
     def render(self, text, fg=pygame.color.Color(0, 0, 255), bg=None):
         return self.pen.render(text, True, fg, bg)
+
+    def get_font_size(self):
+        return self.size
 
 
 class _Consigner:

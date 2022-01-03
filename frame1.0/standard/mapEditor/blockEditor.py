@@ -10,7 +10,7 @@ import sys, json, re
 from typing import List, Dict
 
 from ..core import Pen, Core
-from ..resource import resManager
+from ..resource.manager import resManager
 from ..mapCtrl import MapEditRender
 import pickle, os
 

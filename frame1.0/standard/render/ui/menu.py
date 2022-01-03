@@ -4,7 +4,7 @@
 # @Time      :2021/12/31 16:39
 # @Author    :russionbear
 from typing import List, Dict
-from .resource import resManager
+from .. import resManager
 import pygame
 
 pygame.init()

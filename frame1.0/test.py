@@ -57,3 +57,6 @@
 # resManager.load_menu_source('../test/menu')
 # Core.add(TestWin((600, 400), 'images'))
 # Core.run()
+
+# l0 = []
+# l0.pop(-1)

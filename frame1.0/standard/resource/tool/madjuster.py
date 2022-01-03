@@ -1,5 +1,5 @@
-from ..resource import UnitMaker, resManager
-from ..core import Core, Pen
+from ..unit import UnitMaker, resManager
+from .. import Core, Pen
 
 import pygame, os, json
 pygame.init()
@@ -312,7 +312,4 @@ class Action(pygame.surface.Surface):
         return self.get_rect().collidepoint(pos[0], pos[1])
 
 
-if __name__ == '__main__':
-    print(resManager.m[0][0].__dict__)
-    Core.add(ModeAdjuster((800, 600)))
-    Core.run()
+
