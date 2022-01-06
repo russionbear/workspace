@@ -7,11 +7,10 @@
 """It's just a kind map which is simple"""
 
 from ..resource.manager import resManager
-from ..core import Pen
+from ..core import Pen, Core
 
 import pygame
 import sys
-from ..core import Pen, Core
 import pickle
 import os
 
@@ -40,8 +39,8 @@ class BgRender:
         self.__scaleList = [size]
         self.__nowScalePoint = 0
         while 1:
-            if size[0] < self.__img.get_width() // 2 and \
-                    size[1] < self.__img.get_height() // 2:
+            if size[0] < self.pen.get_width() and \
+                    size[1] < self.pen.get_height():
                 break
             size = int(size[0] / 1.2), int(size[1] / 1.2)
             self.__scaleList.insert(0, size)
@@ -56,7 +55,7 @@ class BgRender:
 
         self.cities = []
         self.roads = []
-        self.names = []
+        self.names = {}
 
         self.__canShow = {self.SCity, self.SRoad, self.SName}
 
@@ -77,10 +76,16 @@ class BgRender:
         self.pen.blit(self.__img, self.__anchor)
         n = self.get_n()
         anchor = self.__anchor
+        font_size = Pen.get_font_size()
         if self.SName in self.__canShow:
-            for i in self.cities:
+            for i1, i in enumerate(self.cities):
                 pos = int(i[0] * n) + anchor[0], int(i[1] * n) + anchor[1]
                 pygame.draw.circle(self.pen, (255, 0, 0), pos, 5, 5)
+                if i1 in self.names:
+                    self.pen.blit(Pen.render(self.names[i1]),
+                                  (pos[0]-Pen.get_width(self.names[i1])//2,
+                                   pos[1]-font_size//2)
+                                  )
         elif self.SCity in self.__canShow:
             for i in self.cities:
                 pos = int(i[0] * n) + anchor[0], int(i[1] * n) + anchor[1]
@@ -96,7 +101,7 @@ class BgRender:
     def event(self, e1):
         pass
 
-    def move(self, y=0, x=0, pos=None):
+    def move(self, x=0, y=0, pos=None):
         if pos:
             y, x = pos
         self.__anchor = y, x
@@ -147,14 +152,31 @@ class BgRender:
     def get_image(self):
         return self.__img
 
+    def clear_log(self):
+        if not self.logs:
+            return
+        t0 = self.logs.pop()
+        if t0 == self.SCity:
+            self.cities.pop()
+        elif t0 == self.SRoad:
+            self.roads.pop()
+        else:
+            return t0
+        # elif t0 == self.SName:
+        #     self.names.pop()
+
 
 class BgRenderEditor(BgRender):
-    def __init__(self, pen, win_size, save_path, city_path):
+    def __init__(self, pen, win_size, save_path):
         super(BgRenderEditor, self).__init__(pen, save_path)
         self.logs = []
         self.status = self.SCity
         self.roadB = None
         self.roadE = None
+        self.__targetTo = None
+
+    def set_target_to(self, obj):
+        self.__targetTo = obj
 
     def update(self):
         super(BgRenderEditor, self).update()
@@ -232,24 +254,38 @@ class BgRenderEditor(BgRender):
             self.roadB = self.roadE = None
 
     def name_city(self, e1):
-        pass
-
-    def clear_log(self):
-        if not self.logs:
+        p1 = self.get_pos()
+        n = self.get_n()
+        pos = (e1.pos[0] - p1[0]) / n, (e1.pos[1] - p1[1]) / n
+        if not self.cities:
             return
-        t0 = self.logs.pop()
-        if t0 == self.SCity:
-            self.cities.pop()
-        elif t0 == self.SRoad:
-            self.roads.pop()
-        elif t0 == self.SName:
-            self.names.pop()
 
-    def save(self):
-        pygame.image.save(self.get_image(), self.savePath+'\\'+'map.jpg')
-        tmp = {'cities': self.cities, 'roads': self.roads}
-        with open(self.savePath+'/points', 'wb') as f:
-            f.write(pickle.dumps(tmp))
+        name = self.__targetTo.get_name()
+        if name is None:
+            return
+
+        min_d = 999999
+        min_c = None
+        for i1, i in enumerate(self.cities):
+            tmp_d = abs(((i[0] - pos[0]) ** 2 + (i[1] - pos[1]) ** 2) ** 0.5)
+            if tmp_d < min_d:
+                min_c = i1
+                min_d = tmp_d
+        should_d = []
+        for k, v in self.names.items():
+            if v == name:
+                should_d.append(k)
+        for i in should_d:
+            del self.names[i]
+        if min_c in self.names:
+            name_ = self.names[min_c]
+            self.names[min_c] = name
+            self.__targetTo.del_name()
+            self.__targetTo.add_name(name_)
+        else:
+            self.names[min_c] = name
+            self.__targetTo.del_name()
+        self.logs.append((min_c, 0))
 
     def contains(self, pos):
         p1 = self.get_pos()
@@ -258,36 +294,12 @@ class BgRenderEditor(BgRender):
     def swap_status(self):
         self.status = (self.status + 1) % (self.SName + 1)
 
-
-class Tool:
-    City = 1
-    Road = 2
-
-    def __init__(self, size):
-        self.suf = pygame.display.set_mode(size)
-        self.legalEvents = {pygame.MOUSEBUTTONDOWN}
-        self.nowP = 0
-        self.city = {'suf': Pen.render('asdasd'), 'anchor': (0, 0), 'rect': None}
-        self.road = {'suf': Pen.render('dasdasd'), 'anchor': (100, 0), 'rect': None}
-
-    def update(self):
-        self.city['rect'] = self.suf.blit(self.city['suf'], self.city['anchor'])
-        if self.nowP == self.City:
-            pygame.draw.rect(self.suf, pygame.color.Color(255, 0, 0), self.city['rect'], width=5)
-        self.road['rect'] = self.suf.blit(self.road['suf'], self.road['anchor'])
-        if self.nowP == self.Road:
-            pygame.draw.rect(self.suf, pygame.color.Color(255, 0, 0), self.road['rect'], width=5)
-
-    def event(self, e1):
-        if e1.button != 1:
-            return
-        if self.city['rect']:
-            if self.city['rect'].collidepoint(e1.pos):
-                self.nowP = self.City
-                return
-        if self.city['rect']:
-            if self.road['rect'].collidepoint(e1.pos):
-                self.nowP = self.Road
+    def clear_log(self):
+        t0 = super(BgRenderEditor, self).clear_log()
+        if isinstance(t0, tuple):
+            print(t0)
+            self.__targetTo.add_name(self.names[t0[0]])
+            del self.names[t0[0]]
 
 
 class ListView:
@@ -383,7 +395,10 @@ class ListView:
         self.__cols = self.__suf.get_width() // self.__blockWidth
 
     def get_chose(self):
-        return self.__data[self.__chose]
+        try:
+            return self.__data[self.__chose]
+        except IndexError:
+            return None
 
     def get_pos(self):
         return self.__anchor
@@ -409,8 +424,131 @@ class ListView:
 
 
 class BgRenderShow(BgRender):
-    def __init__(self, save_path, win_size):
-        super(BgRenderShow, self).__init__(save_path, win_size)
+    def __init__(self, pen, save_path):
+        super(BgRenderShow, self).__init__(pen, save_path)
+        self.__click = pygame.time.Clock()
+        self.motor = Motor()
+        self.moveDirection = None
+
+    def update(self):
+        super(BgRenderShow, self).update()
+        self.motor.update(self.__click.get_time())
+        if self.moveDirection is not None:
+            modified = self.move(pos=self.moveDirection)
+            x, y = self.moveDirection
+            if modified == 0:
+                return
+            elif modified == 3:
+                x = y = 0
+            else:
+                if x != 0 and modified == 1:
+                    x = 0
+                if y != 0 and modified == 2:
+                    y = 0
+            if x == 0 and y == 0:
+                self.moveDirection = None
+            else:
+                self.moveDirection = x, y
+
+    def move(self, x=0, y=0, pos=None):
+        size = self.get_size()
+        p_size = self.pen.get_size()
+        if pos is not None:
+            x, y = pos
+
+        modified = 0
+
+        if p_size[0] >= size[0]:
+            x = (p_size[0]-size[0]) // 2
+        else:
+            if x > 0:
+                x = 0
+                modified += 1
+            elif x + size[0] < p_size[0]:
+                x = p_size[0] - size[0]
+                modified += 1
+
+        if p_size[1] > size[1]:
+            y = (p_size[1]-size[1]) // 2
+        else:
+            if y > 0:
+                y = 0
+                modified += 2
+            elif y + size[1] < p_size[1]:
+                y = p_size[1] - size[1]
+                modified += 2
+
+        super(BgRenderShow, self).move(y=x, x=y)
+
+        return modified
+
+    def scale(self, n):
+        super(BgRenderShow, self).scale(n)
+        self.move(pos=self.get_pos())
+
+    def event(self, e1):
+        if e1.type == pygame.MOUSEMOTION:
+            print(e1.pos)
+
+    def set_move_direction(self, xy=None):
+        self.moveDirection = xy
+
+
+class Motor:
+    Delay = 0
+    Action = 1
+    Move = 2
+    Scale = 3
+
+    def __init__(self):
+        self.__data = {}
+
+    def add(self, obj, cmd):
+        self.__data[obj] = cmd
+
+    def remove(self, obj):
+        if obj in self.__data:
+            del self.__data[obj]
+
+    def update(self, t0):
+        should_d = set()
+        for k, v in self.__data.items():
+            tmp = v[0]
+            if tmp[0] == self.Action:
+                k.swap(tmp[2], tmp[1])
+                v.pop(0)
+            elif tmp[0] == self.Delay:
+                tmp[1] -= t0
+                if tmp[1] <= 0:
+                    v.pop(0)
+            elif tmp[0] == self.Move:
+                if self.move(k, tmp[1], tmp[2]):
+                    v.pop(0)
+            if not v:
+                should_d.add(k)
+        for i in should_d:
+            del self.__data[i]
+
+    @staticmethod
+    def move(obj: BgRender, pos, step):
+        p1 = obj.get_pos()
+        d1 = pos[0] - p1[0], pos[1] - p1[1]
+        distance = (d1[0] ** 2 + d1[1] ** 2) ** 0.5
+        if distance < step:
+            obj.move(pos=pos)
+            return True
+        n = step / distance
+        p2 = p1[0] + int(d1[0] * n), p1[1] + int(d1[1] * n)
+        obj.move(pos=p2)
+
+    @staticmethod
+    def scale(obj: BgRender, n):
+        while n > 0:
+            obj.scale(1)
+            n -= 1
+        while n < 0:
+            obj.scale(-1)
+            n += 1
 
 
 class TestWin:
@@ -480,7 +618,7 @@ class TestWin:
 
 
 class TestWinEditor:
-    def __init__(self, size, save_path, city_path):
+    def __init__(self, size, save_path, city_path=None):
         self.legalEvents = {pygame.MOUSEBUTTONDOWN,
                             pygame.MOUSEBUTTONUP,
                             pygame.MOUSEMOTION,
@@ -489,24 +627,36 @@ class TestWinEditor:
 
         self.suf = pygame.display.set_mode(size)
 
-        self.render = BgRenderEditor(self.suf, save_path)
+        self.render = BgRenderEditor(self.suf, size, save_path)
+        self.render.set_target_to(self)
 
         self.__winAnchor = self.suf.get_width()//2, self.suf.get_height()//2
         self.isMouseDown = False
         self.isCtrlDown = False
 
-        with open(city_path, 'r', encoding='utf-8') as f:
-            s0 = f.read()
-        self.tool = ListView(self.pen, win_size, s0.split('\n'))
-        self.toolShowed = False
+        """此方案略微复杂 <875690>"""
+        # with open(city_path, 'r', encoding='utf-8') as f:
+        #     s0 = f.read()
+        # self.tool = ListView(self.pen, win_size, s0.split('\n'))
+        # self.toolShowed = False
+
+        self.storageName = ['name']
+        self.pointName = 0
+        if city_path:
+            with open(city_path, 'r', encoding='utf-8') as f:
+                s0 = f.read()
+            self.storageName = s0.split('\n')
 
     def update(self):
         self.suf.fill((0, 0, 0))
-        if self.toolShowed:
-            self.tool.update()
-            return
+        """875690"""
+        # if self.toolShowed:
+        #     self.tool.update()
+        #     return
         self.render.update()
         self.suf.blit(Pen.render(str(self.render.status)), (0, 0))
+        if self.storageName[self.pointName]:
+            self.suf.blit(Pen.render(self.storageName[self.pointName]), (30, 0))
 
     def event(self, e0):
         if e0.type == pygame.MOUSEMOTION:
@@ -519,9 +669,10 @@ class TestWinEditor:
 
         if e0.type == pygame.MOUSEBUTTONDOWN:
             pygame.event.set_grab(True)
-            if e0.button in (1, 4, 5) and self.toolShowed:
-                self.tool.event(e0)
-                return
+            """875690"""
+            # if e0.button in (1, 4, 5) and self.toolShowed:
+            #     self.tool.event(e0)
+            #     return
 
             if e0.button == 1:
                 self.render.event(e0)
@@ -552,12 +703,40 @@ class TestWinEditor:
                 self.render.save()
             elif e0.key == pygame.K_TAB:
                 if self.isCtrlDown:
-                    self.toolShowed = not self.toolShowed
+                    """875690"""
+                    # self.toolShowed = not self.toolShowed
+                    pass
                 else:
                     self.render.swap_status()
+
+            elif e0.key == pygame.K_q:
+                if self.pointName <= 0:
+                    return
+                self.pointName -= 1
+                # self.render.set_now_name(self.storageName[self.pointName])
+            elif e0.key == pygame.K_e:
+                if self.pointName + 1 == len(self.storageName):
+                    return
+                self.pointName += 1
+                # self.render.set_now_name(self.storageName[self.pointName])
         elif e0.type == pygame.KEYUP:
             if e0.key == pygame.K_LCTRL:
                 self.isCtrlDown = False
+
+    def get_name(self):
+        return self.storageName[self.pointName]
+
+    def del_name(self):
+        self.storageName.pop(self.pointName)
+        if self.pointName == len(self.storageName):
+            self.pointName -= 1
+        if self.pointName == -1:
+            self.storageName.append(None)
+
+    def add_name(self, n0):
+        if self.storageName[0] is None:
+            self.storageName = []
+        self.storageName.append(n0)
 
 
 class TestWinTool:
@@ -584,4 +763,93 @@ class TestWinTool:
                 self.render.event(e0)
             elif e0.button == 4 or e0.button == 5:
                 self.render.event(e0)
+
+
+class TestWinShow:
+    def __init__(self, size, save_path):
+        self.legalEvents = {pygame.MOUSEBUTTONDOWN,
+                            pygame.MOUSEBUTTONUP,
+                            pygame.MOUSEMOTION,
+                            pygame.KEYDOWN,
+                            pygame.KEYUP}
+
+        self.suf = pygame.display.set_mode(size)
+
+        self.render = BgRenderShow(self.suf, save_path)
+
+        self.__winAnchor = self.suf.get_width()//2, self.suf.get_height()//2
+        self.isMouseDown = False
+        self.isCtrlDown = False
+
+        pygame.event.set_grab(True)
+
+    def update(self):
+        self.suf.fill((0, 0, 0))
+
+        self.render.update()
+
+    def event(self, e0):
+        if e0.type == pygame.MOUSEMOTION:
+            print(e0.pos)
+            x, y = 0, 0
+            speed = 5
+            if e0.pos[0] == 0:
+                x = speed
+            elif e0.pos[0] == self.suf.get_width() - 1:
+                x = -speed
+
+            if e0.pos[1] == 0:
+                y = speed
+            elif e0.pos[1] == self.suf.get_height() - 1:
+                y = -speed
+
+            if x != 0 or y != 0:
+                self.render.set_move_direction((x, y))
+            else:
+                self.render.set_move_direction()
+
+            # if e0.buttons[2]:
+            #     pos = self.render.get_pos()
+            #     pos = pos[0] + e0.rel[0], pos[1] + e0.rel[1]
+            #     self.render.move(pos=pos)
+            # elif e0.buttons[0]:
+            #     self.render.event(e0)
+
+        if e0.type == pygame.MOUSEBUTTONDOWN:
+            pygame.event.set_grab(True)
+
+            if e0.button == 1:
+                self.render.event(e0)
+            elif e0.button == 4 or e0.button == 5:
+                p0 = self.render.get_pos()
+                anchor1 = p0[0] - self.__winAnchor[0], \
+                          p0[1] - self.__winAnchor[1]
+                n1 = self.render.get_n()
+                self.render.scale(int(not bool(e0.button-4)))
+
+                n2 = self.render.get_n()
+                n = n2 / n1
+                d0 = int(n*anchor1[0]) + self.__winAnchor[0], \
+                     int(n*anchor1[1]) + self.__winAnchor[1]
+                self.render.move(pos=d0)
+
+        elif e0.type == pygame.MOUSEBUTTONUP:
+            pygame.event.set_grab(False)
+            if e0.button == 1:
+                self.render.event(e0)
+
+        elif e0.type == pygame.KEYDOWN:
+            if e0.key == pygame.K_LCTRL:
+                self.isCtrlDown = True
+            elif e0.key == pygame.K_q and self.isCtrlDown:
+                Core.stop()
+            elif e0.key == pygame.K_s and self.isCtrlDown:
+                self.render.save()
+            elif e0.key == pygame.K_TAB:
+                pass
+
+        elif e0.type == pygame.KEYUP:
+            if e0.key == pygame.K_LCTRL:
+                self.isCtrlDown = False
+
 

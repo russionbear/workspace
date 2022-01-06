@@ -1,3 +1,4 @@
+# coding: utf-8
 import pygame
 from queue import Queue
 from threading import Thread
@@ -68,7 +69,7 @@ class _Core:
 
 class _Pen:
     def __init__(self):
-        self.font = "arial"
+        self.font = "SimHei"
         self.size = 30
         self.pen = pygame.font.SysFont(self.font, self.size)
         self.__pens = {}
@@ -93,6 +94,36 @@ class _Pen:
 
     def get_font_size(self):
         return self.size
+
+    @staticmethod
+    def to_std_size(ustring):
+        """半角转全角"""
+        rstring = ""
+        for uchar in ustring:
+            inside_code = ord(uchar)
+            if inside_code == 32:
+                inside_code = 12288
+            elif 32 <= inside_code <= 126:
+                inside_code += 65248
+            rstring += chr(inside_code)
+        return rstring
+
+    def get_width(self, s0):
+        width = 0
+        for i in s0:
+            c_ord = ord(i)
+            if 32 <= c_ord <= 126:
+                width += 1
+            else:
+                width += 2
+        return width * self.size // 2
+
+    # def get_height(self, s0):
+    #     for i in s0:
+    #         c_ord = ord(i)
+    #         if c_ord == 12288 or 65280 <= c_ord <=65374:
+    #             return self.size
+    #     return self.size // 2
 
 
 class _Consigner:

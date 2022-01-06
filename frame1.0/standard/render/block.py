@@ -419,7 +419,7 @@ class Motor:
         pos1 = obj.get_pos()
         size = obj.get_size()
         target = size[0] * rl[0], size[1] * rl[1]
-        d1 = target[0] - pos1[0], target[0] - pos1[1]
+        d1 = target[0] - pos1[0], target[1] - pos1[1]
         distance = (d1[0] ** 2 + d1[1] ** 2) ** 0.5
         step = step * size[0] / 100
         if distance <= step:

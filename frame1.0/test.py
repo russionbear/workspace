@@ -58,5 +58,6 @@
 # Core.add(TestWin((600, 400), 'images'))
 # Core.run()
 
-# l0 = []
-# l0.pop(-1)
+# import pygame
+# pygame.surface.Surface((100, 100))
+print(''.join(['1', '2']))
