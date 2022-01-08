@@ -5,3 +5,4 @@
 # @Author    :russionbear
 
 from ..resource.manager import resManager
+from ..core import Pen

@@ -68,18 +68,27 @@ class _Core:
 
 
 class _Pen:
+    Pens = {}
+
     def __init__(self):
         self.font = "SimHei"
         self.size = 30
         self.pen = pygame.font.SysFont(self.font, self.size)
-        self.__pens = {}
+        # self.fg = (0, 0, 255)
+        # self.bg = None
+        # self.__pens = {}
 
-    def make_pen(self, size, font):
+    @classmethod
+    def make_pen(cls, size, font):
         k0 = (size, hash(font))
-        if k0 in self.__pens:
-            return self.__pens[k0]
-        obj = pygame.font.SysFont(self.font, self.size)
-        self.__pens[k0] = obj
+        if k0 in cls.Pens:
+            return cls.Pens[k0]
+        obj = cls()
+        obj.font = font
+        obj.size = size
+        obj.pen = pygame.font.SysFont(font, size)
+        # obj =
+        cls.Pens[k0] = obj
         return obj
 
     def set(self, size=None, font=None):

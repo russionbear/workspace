@@ -60,4 +60,5 @@
 
 # import pygame
 # pygame.surface.Surface((100, 100))
-print(''.join(['1', '2']))
+l0 = '12345'
+print(l0[2:0])
