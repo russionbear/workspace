@@ -8,6 +8,7 @@
 
 from ..resource.manager import resManager
 from ..core import Pen, Core
+from .ui.listView import ListView
 
 import pygame
 import sys
@@ -35,24 +36,6 @@ class BgRender:
         self.__anchor = 0, 0
         self.__click = pygame.time.Clock()
 
-        size = self.__img.get_size()
-        self.__scaleList = [size]
-        self.__nowScalePoint = 0
-        while 1:
-            if size[0] < self.pen.get_width() and \
-                    size[1] < self.pen.get_height():
-                break
-            size = int(size[0] / 1.2), int(size[1] / 1.2)
-            self.__scaleList.insert(0, size)
-            self.__nowScalePoint += 1
-        size = self.__img.get_size()
-        while 1:
-            if size[0] > self.__img.get_width() * 4 and \
-                    size[1] > self.__img.get_height() * 4:
-                break
-            size = int(size[0] * 1.2), int(size[1] * 1.2)
-            self.__scaleList.append(size)
-
         self.cities = []
         self.roads = []
         self.names = {}
@@ -71,6 +54,27 @@ class BgRender:
             for i in tmp['roads']:
                 self.roads.append(tuple(i))
             self.names = tmp['names']
+
+            block_size = tmp['size']
+            self.__img = pygame.transform.scale(self.__priImg, block_size)
+
+        size = self.__img.get_size()
+        self.__scaleList = [size]
+        self.__nowScalePoint = 0
+        while 1:
+            if size[0] < self.pen.get_width() and \
+                    size[1] < self.pen.get_height():
+                break
+            size = int(size[0] / 1.2), int(size[1] / 1.2)
+            self.__scaleList.insert(0, size)
+            self.__nowScalePoint += 1
+        size = self.__img.get_size()
+        while 1:
+            if size[0] > self.__img.get_width() * 4 and \
+                    size[1] > self.__img.get_height() * 4:
+                break
+            size = int(size[0] * 1.2), int(size[1] * 1.2)
+            self.__scaleList.append(size)
 
     def update(self):
         self.pen.blit(self.__img, self.__anchor)
@@ -302,139 +306,49 @@ class BgRenderEditor(BgRender):
             del self.names[t0[0]]
 
 
-class ListView:
-    def __init__(self, pen, size, data):
-        self.__data: list = data
-        self.__pen = pen
-        self.__suf = pygame.surface.Surface(size)
-        self.__bgColor = (0, 0, 0)
-
-        self.legalEvents = {pygame.MOUSEBUTTONDOWN,
-                            pygame.MOUSEBUTTONUP,
-                            pygame.MOUSEMOTION,
-                            pygame.KEYDOWN,
-                            pygame.KEYUP}
-
-        self.__anchor = 0, 0
-
-        self.__rows = self.__suf.get_height() // Pen.get_font_size()
-        self.__blockHeight = Pen.get_font_size()
-        self.__cols = 1
-        self.__blockWidth = 1
-        self.__point = 0
-        self.__chose = 0
-        self.scroll(False)
-        self.scroll(True)
-
-    def update(self):
-        self.__pen.blit(self.__suf, self.__anchor)
-        self.__suf.fill(self.__bgColor)
-        up = self.__cols * self.__rows
-        for i1, i in enumerate(self.__data[self.__point:up+self.__point]):
-            rect = self.__suf.blit(Pen.render(i),
-                            (i1 % self.__cols * self.__blockWidth + self.__anchor[0],
-                             i1 // self.__cols * self.__blockHeight + self.__anchor[1])
-                            )
-            if self.__point + i1 == self.__chose:
-                pygame.draw.rect(self.__suf, (100, 200, 0), rect, 4)
-
-    def event(self, e1):
-        if e1.type == pygame.MOUSEBUTTONDOWN:
-            if e1.button == 1:
-                pos = e1.pos[0] - self.__anchor[0], \
-                    e1.pos[1] - self.__anchor[1]
-                xy = pos[0] // self.__blockWidth, pos[1] // self.__blockHeight
-                if xy[0] + xy[1] * self.__cols + self.__point >= len(self.__data):
-                    return
-                if xy[0] < 0 or xy[1] < 0:
-                    return
-                self.__chose = xy[0] + xy[1] * self.__cols + self.__point
-
-            elif e1.button == 4:
-                self.scroll(True)
-            elif e1.button == 5:
-                self.scroll()
-
-    def move(self, y=0, x=0, pos=None):
-        if pos:
-            y, x = pos
-        self.__anchor = y, x
-
-    def scroll(self, up=False):
-        v = self.__cols * self.__rows
-        if up:
-            self.__point -= self.__cols
-            if self.__point < 0:
-                self.__point = 0
-        else:
-            if len(self.__data) <= v:
-                return
-            self.__point += self.__cols
-            if self.__point + v > len(self.__data):
-                self.__point = len(self.__data) - v
-
-            # vc = len(self.__data) % v
-            # vq = len(self.__data) // v * v
-            # self.__point += self.__cols
-            # if vc == 0:
-            #     if self.__point >= vq:
-            #         self.__point = vq - v
-            #
-            #     print('00')
-            # else:
-            #     if self.__point >= vq:
-            #         self.__point = vq
-
-            # print(self.__point, vq, len(self.__data))
-
-        self.__blockWidth = 0
-        for i1, i in enumerate(self.__data[self.__point:v]):
-            rect = self.__suf.blit(Pen.render(i), (0, 0))
-            self.__blockWidth = max(rect.width, self.__blockWidth)
-        self.__blockWidth += 7
-        self.__cols = self.__suf.get_width() // self.__blockWidth
-
-    def get_chose(self):
-        try:
-            return self.__data[self.__chose]
-        except IndexError:
-            return None
-
-    def get_pos(self):
-        return self.__anchor
-
-    def get_size(self):
-        return self.__suf.get_size()
-
-    def get_rect(self):
-        return self.__suf.get_rect()
-
-    def insert(self, value, cursor=None):
-        if cursor is None:
-            self.__data.append(value)
-        else:
-            self.__data.insert(cursor, value)
-
-    def remove(self, value):
-        self.__data.remove(value)
-
-    def pop(self, index=-1):
-        if self.__data:
-            return self.__data.pop(index)
-
-
 class BgRenderShow(BgRender):
     def __init__(self, pen, save_path):
         super(BgRenderShow, self).__init__(pen, save_path)
         self.__click = pygame.time.Clock()
         self.motor = Motor()
         self.moveDirection = None
+        self.moveTarget = None
+
+        n = 0
+        while 1:
+            size = self.get_size()
+            super(BgRenderShow, self).scale(-1)
+            if size == self.get_size():
+                break
+            n += 1
+
+        self.nowScaleStd = n
+        self.isMiniMap = True
+
+        self.cityBelong = {}
+
+        if os.path.exists(save_path + '/points'):
+            with open(save_path + '/points', 'rb') as f:
+                tmp = pickle.load(f)
+            # for i in tmp['cities']:
+            #     self.cities.append((i[0], i[1]))
+            # for i in tmp['roads']:
+            #     self.cities.append((i[0], i[1]))
+            self.cities = tmp['cities']
+            self.roads.clear()
+            for i in tmp['roads']:
+                self.roads.append(tuple(i))
+            self.names = tmp['names']
+
+            block_size = tmp['size']
+            self.__img = pygame.transform.scale(self.__priImg, block_size)
 
     def update(self):
         super(BgRenderShow, self).update()
         self.motor.update(self.__click.get_time())
         if self.moveDirection is not None:
-            modified = self.move(pos=self.moveDirection)
+            pos = self.get_pos()
+            modified = self.move(x=pos[0]+self.moveDirection[0], y=pos[1]+self.moveDirection[1])
             x, y = self.moveDirection
             if modified == 0:
                 return
@@ -449,6 +363,11 @@ class BgRenderShow(BgRender):
                 self.moveDirection = None
             else:
                 self.moveDirection = x, y
+
+        elif self.moveTarget:
+            self.auto_move()
+
+        # elif self.scaleTarget
 
     def move(self, x=0, y=0, pos=None):
         size = self.get_size()
@@ -468,7 +387,7 @@ class BgRenderShow(BgRender):
                 x = p_size[0] - size[0]
                 modified += 1
 
-        if p_size[1] > size[1]:
+        if p_size[1] >= size[1]:
             y = (p_size[1]-size[1]) // 2
         else:
             if y > 0:
@@ -479,19 +398,59 @@ class BgRenderShow(BgRender):
                 modified += 2
 
         super(BgRenderShow, self).move(y=x, x=y)
-
+        # print(modified, 'm')
         return modified
 
     def scale(self, n):
-        super(BgRenderShow, self).scale(n)
-        self.move(pos=self.get_pos())
+        if n > 0 and self.isMiniMap:
+            for i in range(self.nowScaleStd):
+                super(BgRenderShow, self).scale(1)
+            self.isMiniMap = False
+        elif not self.isMiniMap:
+            for i in range(self.nowScaleStd):
+                super(BgRenderShow, self).scale(-1)
+            self.isMiniMap = True
 
     def event(self, e1):
         if e1.type == pygame.MOUSEMOTION:
-            print(e1.pos)
+            pass
 
     def set_move_direction(self, xy=None):
+        # return
         self.moveDirection = xy
+
+    def auto_move(self):
+        p1 = self.get_pos()
+        pos = self.moveTarget
+        step = 1
+        d1 = pos[0] - p1[0], pos[1] - p1[1]
+        distance = (d1[0] ** 2 + d1[1] ** 2) ** 0.5
+        if distance < step:
+            self.move(pos=pos)
+            self.moveTarget = None
+        n = step / distance
+
+        x, y = int(d1[0] * n), int(d1[1] * n)
+        x = x if x else 1 if d1[0] > 0 else -1
+        y = y if y else 1 if d1[1] > 0 else -1
+
+        p2 = p1[0] + x, p1[1] + y
+
+        if self.move(pos=p2) != 0:
+            self.moveTarget = None
+
+    def save(self):
+        if self.isMiniMap:
+            self.scale(1)
+        super(BgRenderShow, self).save()
+
+    # def auto_scale(self, n):
+    #     while n > 0:
+    #         obj.scale(1)
+    #         n -= 1
+    #     while n < 0:
+    #         obj.scale(-1)
+    #         n += 1
 
 
 class Motor:
@@ -739,32 +698,6 @@ class TestWinEditor:
         self.storageName.append(n0)
 
 
-class TestWinTool:
-    def __init__(self, size):
-        self.legalEvents = {pygame.MOUSEBUTTONDOWN,
-                            pygame.MOUSEBUTTONUP,
-                            pygame.MOUSEMOTION,
-                            pygame.KEYDOWN,
-                            pygame.KEYUP}
-
-        self.suf = pygame.display.set_mode(size)
-
-        self.render = ListView(self.suf, size, ['1'])
-
-        self.isCtrlDown = False
-
-    def update(self):
-        self.suf.fill((0, 0, 0))
-        self.render.update()
-
-    def event(self, e0):
-        if e0.type == pygame.MOUSEBUTTONDOWN:
-            if e0.button == 1:
-                self.render.event(e0)
-            elif e0.button == 4 or e0.button == 5:
-                self.render.event(e0)
-
-
 class TestWinShow:
     def __init__(self, size, save_path):
         self.legalEvents = {pygame.MOUSEBUTTONDOWN,
@@ -790,9 +723,9 @@ class TestWinShow:
 
     def event(self, e0):
         if e0.type == pygame.MOUSEMOTION:
-            print(e0.pos)
+            # print(e0.pos)
             x, y = 0, 0
-            speed = 5
+            speed = 1
             if e0.pos[0] == 0:
                 x = speed
             elif e0.pos[0] == self.suf.get_width() - 1:
@@ -834,7 +767,7 @@ class TestWinShow:
                 self.render.move(pos=d0)
 
         elif e0.type == pygame.MOUSEBUTTONUP:
-            pygame.event.set_grab(False)
+            # pygame.event.set_grab(False)
             if e0.button == 1:
                 self.render.event(e0)
 

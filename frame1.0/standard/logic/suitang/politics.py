@@ -649,7 +649,7 @@ class Person:
         # self.id = None
         self.name = ''
         self.dsc = ''
-        self.belong = 1
+        self.belong = None
 
         self.loyal = random.randint(0, Top.Loyal)
         self.wise = random.randint(0, Top.Wise*2)
@@ -963,7 +963,6 @@ class Force:
         obj = cls()
         # int 1, float 2, str 3, list 4, dict 5
         keys = {
-            "header": 3,
             "cities": 4
         }
         for k, v in keys.items():

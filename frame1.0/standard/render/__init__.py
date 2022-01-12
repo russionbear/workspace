@@ -6,3 +6,4 @@
 
 from ..resource.manager import resManager
 from ..core import Pen
+from ..resource.unit import UnitMaker

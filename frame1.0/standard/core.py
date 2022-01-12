@@ -23,14 +23,18 @@ class _Core:
                 if e0.type == pygame.QUIT:
                     pygame.quit()
                     return
-                if e0.type not in self.legalEvents:
-                    continue
-                for i in self.listener:
-                    if e0.type in i.legalEvents:
-                        i.event(e0)
+                # if e0.type not in self.legalEvents:
+                #     continue
+                # for i in self.listener:
+                #     if e0.type in i.legalEvents:
+                #         i.event(e0)
+                if self.listener:
+                    if e0.type in self.listener[-1].legalEvents:
+                        self.listener[-1].event(e0)
 
-            for i in self.listener:
-                i.update()
+            # for i in self.listener:
+            #     i.update()
+            self.listener[-1].update()
 
             pygame.display.update()
 
@@ -63,6 +67,15 @@ class _Core:
     def remove(self, obj):
         self.listener.remove(obj)
 
+    def push(self, obj):
+        self.listener.append(obj)
+
+    def pop(self):
+        self.listener.pop()
+
+    def clear(self):
+        self.listener.clear()
+
     def has(self, obj):
         return obj in self.listener
 
@@ -74,8 +87,8 @@ class _Pen:
         self.font = "SimHei"
         self.size = 30
         self.pen = pygame.font.SysFont(self.font, self.size)
-        # self.fg = (0, 0, 255)
-        # self.bg = None
+        self.fg = (0, 0, 255)
+        self.bg = None
         # self.__pens = {}
 
     @classmethod
@@ -91,6 +104,10 @@ class _Pen:
         cls.Pens[k0] = obj
         return obj
 
+    @classmethod
+    def del_pen(cls, size, font):
+        del cls.Pens[(size, hash(font))]
+
     def set(self, size=None, font=None):
         if size:
             self.size = size
@@ -98,7 +115,11 @@ class _Pen:
             self.font = font
         self.pen = pygame.font.SysFont(self.font, self.size)
 
-    def render(self, text, fg=pygame.color.Color(0, 0, 255), bg=None):
+    def render(self, text, fg=None, bg=None):
+        if fg is None:
+            fg = self.fg
+        if bg is None:
+            bg = self.bg
         return self.pen.render(text, True, fg, bg)
 
     def get_font_size(self):

@@ -4,7 +4,8 @@
 # @Time      :2021/12/31 16:39
 # @Author    :russionbear
 from typing import List, Dict
-from .. import resManager
+from .. import resManager, Pen
+from ..layout import Layout
 import pygame
 
 pygame.init()
@@ -15,30 +16,60 @@ def make_text_image(text, font, size):
 
 
 class MenuItem:
-    def __init__(self, pen, t0):
+    def __init__(self, pen, text=None, bgt0=None, width=None):
         self.__pen = pen
         self.__anchor = 0, 0
-        self.__nowImage = resManager.get_menu_image(t0)
-        self.__key = t0
+
+        self.__nowImage = None
+
+        if bgt0 is not None:
+            self.__nowImage = resManager.get_menu_image(bgt0)
+            size = self.__nowImage.get_size()
+            if width is None:
+                width = Pen.get_font_size()
+            size = width, width * size[1] // size[0]
+            self.__nowImage = pygame.transform(self.__nowImage, size)
+
+            self.__key = bgt0[-1]
+        else:
+            self.__textSuf = Pen.render(text)
+            self.__key = text
 
     def update(self):
-        self.__pen.blit(self.__nowImage, self.__anchor)
-        # pygame.draw.rect(self.__pen, (0, 255, 100), self.__nowImage.get_rect().move(self.__anchor[0], self.__anchor[1]), 4)
+        if self.__nowImage:
+            self.__pen.blit(self.__nowImage, self.__anchor)
+            """debug"""
+            # pygame.draw.rect(self.__pen, (0, 255, 100),
+            #                  self.__nowImage.get_rect().move(self.__anchor[0], self.__anchor[1]), 4)
+
+        else:
+            self.__pen.blit(self.__textSuf, self.__anchor)
+            """debug"""
+            # pygame.draw.rect(self.__pen, (0, 255, 100),
+            #                  self.__textSuf.get_rect().move(self.__anchor[0], self.__anchor[1]), 4)
 
     def contains(self, pos):
-        return self.__nowImage.get_rect().move(self.__anchor[0], self.__anchor[1]).collidepoint(pos[0], pos[1])
+        if self.__nowImage:
+            return self.__nowImage.get_rect().move(self.__anchor[0], self.__anchor[1]).collidepoint(pos[0], pos[1])
+        else:
+            return self.__textSuf.get_rect().move(self.__anchor[0], self.__anchor[1]).collidepoint(pos[0], pos[1])
 
     def set_pen(self, pen):
         self.__pen = pen
 
     def get_size(self):
-        return self.__nowImage.get_size()
+        if self.__nowImage:
+            return self.__nowImage.get_size()
+        else:
+            return self.__textSuf.get_size()
 
-    def scale(self, size):
-        self.__nowImage = pygame.transform.scale(self.__nowImage, size)
+    # def scale(self, size):
+    #     self.__nowImage = pygame.transform.scale(self.__nowImage, size)
 
-    def set_pos(self, pos):
-        self.__anchor = pos
+    def move(self, x=0, y=0, pos=None):
+        if pos is not None:
+            x, y = pos
+        self.__anchor = x, y
 
     def get_pos(self):
         return self.__anchor
@@ -48,39 +79,23 @@ class MenuItem:
 
 
 class Menu:
-    def __init__(self, pen, t0=None, space=0, border=0, width=30):
+    def __init__(self, pen, size, bgt0=None):
+        self.legalEvents = {pygame.MOUSEBUTTONDOWN}
+
         self.__pen = pen
         self.__anchor = 0, 0
+        self.__suf = pygame.surface.Surface(size)
+
         self.__children: List[MenuItem] = []
-        self.__suf = pygame.surface.Surface((1, 1))
-        self.__bg = None if t0 is None else resManager.get_menu_image(t0)
-        self.__width = width
-        self.__border = border
-        self.__space = space
+
+        self.__bg = None
+        if bgt0 is not None:
+            self.__bg = resManager.get_menu_image(bgt0)
+
         self.__showed = True
 
-    def add_items(self, items):
-        w, h = 0, -self.__space
-        items = list(set(items))
-        for i in items:
-            obj = MenuItem(self.__suf, i)
-            size = obj.get_size()
-            n = self.__width / size[0]
-            obj.scale((int(n*size[0]), int(n*size[1])))
-            obj.set_pos((self.__border, h+self.__space+self.__border))
-            # print(obj.get_pos())
-            size = obj.get_size()
-            w = max(w, size[0])
-            h += size[1] + self.__space
-            self.__children.append(obj)
-
-        self.__suf = pygame.surface.Surface(
-            (w+self.__border*2, h+self.__border*2))
-        if self.__bg:
-            self.__bg = pygame.transform.scale(self.__bg, self.__suf.get_size())
-        for i in self.__children:
-            i.set_pen(self.__suf)
-        # self.scale(self.__rate)
+        self.__callBack = None
+        self.__id = None
 
     # def scale(self, rate):
     #     size = self.__suf.get_size()
@@ -94,7 +109,19 @@ class Menu:
     #         i.set_pen(self.__suf)
     #         size = i.get_pos()
     #         size = int(size[0] * rate), int(size[1] * rate)
-    #         i.set_pos(size)
+    #         i.move(size)
+
+    def set_call_back(self, func, id_=None):
+        self.__callBack = func
+        self.__id = id_
+
+    def add_items(self, items):
+        for i in items:
+            if isinstance(i, str):
+                obj = MenuItem(self.__suf, i)
+            else:
+                obj = MenuItem(self.__suf, bgt0=i[0], width=i[1])
+            self.__children.append(obj)
 
     def move(self, x=0, y=0, pos=None):
         if pos is not None:
@@ -109,17 +136,36 @@ class Menu:
             self.__suf.blit(self.__bg, (0, 0))
         for i in self.__children:
             i.update()
-        # pygame.draw.rect(self.__pen, (0, 255, 100), self.__suf.get_rect(), 4)
+        """debug"""
+        # pygame.draw.rect(self.__pen, (0, 255, 100),
+        #                  self.__suf.get_rect().
+        #                  move(self.__anchor[0], self.__anchor[1]),
+        #                  4)
+
+    def event(self, e0):
+        if not self.contains(e0.pos) or e0.button != 1:
+            self.__showed = False
+            return
+
+        # if not self.__showed:
+        #     self.__showed = True
+
+        for i in self.__children:
+            if i.contains(e0.pos):
+                if self.__callBack:
+                    self.__callBack(self.__id, i.get_key())
+                self.__showed = False
+                break
+                # return i.get_key()
 
     def contains(self, pos):
-        pos = pos[0] - self.__anchor[0], pos[1] - self.__anchor[1]
-        if not self.__suf.get_rect().collidepoint(pos[0], pos[1]):
-            return None
-        print(pos)
-        for i in self.__children:
-            if i.contains(pos):
-                return i.get_key()
-        return False
+        return self.__suf.get_rect().\
+            move(self.__anchor[0], self.__anchor[1]).\
+            collidepoint(pos[0], pos[1])
+        # print(pos)
+        # for i in self.__children:
+        #     if i.contains(pos):
+        #         return i.get_key()
 
     def clear(self):
         self.__children.clear()
@@ -133,23 +179,49 @@ class Menu:
     def get_size(self):
         return self.__suf.get_size()
 
+    def get_rect(self):
+        return self.__suf.get_rect().move(self.__anchor[0], self.__anchor[1])
+
     def set_bg(self, name):
         self.__bg = pygame.transform.scale(resManager.get_menu_image(name), self.__suf.get_size())
 
+    def children(self):
+        return self.__children
 
-class TestWin:
-    def __init__(self, size, s0):
+
+class MenuWin:
+    def __init__(self, size, bgt0=None):
         self.legalEvents = {pygame.MOUSEBUTTONDOWN}
         self.suf = pygame.display.set_mode(size)
-        self.menu = Menu(self.suf, s0, 12, 12)
-        self.menu.add_items(['images', 'images', 'images'])
+        self.menus = {}
+
+        self.listener = None
+        self.nowTitle = None
+
+    def add_menu(self, title, size, items, bgt0=None):
+        obj = Menu(self.suf, size, bgt0)
+        obj.add_items(items)
+        Layout.vertical_box(obj.children(), obj.get_rect())
+        self.menus[title] = obj
+
+        # Layout.horizontal_box(list(self.menus.values()), self.suf.get_rect())
+        Layout.horizontal_box([obj], self.suf.get_rect())
+        self.swap(title)
 
     def update(self):
         self.suf.fill((0, 0, 0))
-        self.menu.update()
+        if self.listener:
+            self.listener.update()
+
+    def swap(self, title):
+        self.listener = self.menus[title]
+        self.nowTitle = title
 
     def event(self, e0):
-        if e0.type == pygame.MOUSEBUTTONDOWN:
-            if e0.button == 1:
-                print(self.menu.contains(e0.pos))
+        if e0.button != 1 or not self.listener:
+            return
+        return self.listener.contains(e0.pos)
+
+
+
 

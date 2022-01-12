@@ -4,7 +4,7 @@
 # @Time      :2022/1/2 16:30
 # @Author    :russionbear
 
-from standard.render.background import TestWinEditor, TestWinTool, TestWinShow
+from standard.render.background import TestWinEditor, TestWinShow
 from standard.core import Core, Pen
 
 # Core.add(TestWinEditor((800, 600),

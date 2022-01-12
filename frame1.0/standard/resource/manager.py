@@ -338,8 +338,15 @@ class ResMng:
 
     def load_menu_source(self, path):
         for i in os.listdir(path):
-            name = i.split('.')[0]
-            self.menuImages[name] = pygame.image.load(path + '/' + i)
+            names = i.split('.')[0].split('_')
+            tmp = self.menuImages
+            for i in names[:-1]:
+                if i not in tmp:
+                    tmp[i] = {}
+                tmp = tmp[i]
+            # name = i.split('.')[0]
+            tmp[names[-1]] = pygame.image.load(path + '/' + i)
+            # self.menuImages[name] = pygame.image.load(path + '/' + i)
 
     def save_modes(self, path, spirit, **kwargs):
         with open(path, 'r') as f:
@@ -674,8 +681,12 @@ class ResMng:
                 # return i.copy()
         return None
 
-    def get_menu_image(self, name):
-        return self.menuImages[name]
+    def get_menu_image(self, k0):
+        tmp = self.menuImages
+        for i in k0:
+            tmp = tmp[i]
+        return tmp
+        # return self.menuImages[name]
 
 
 # class ResMngAdj(ResMng):

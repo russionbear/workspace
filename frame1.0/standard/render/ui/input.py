@@ -72,6 +72,9 @@ class Input:
                  size=25, font='SimHei',
                  image=None, fg=(0, 200, 0)
                  ):
+        self.legalEvents = {pygame.MOUSEBUTTONDOWN,
+                           pygame.KEYDOWN,
+                           pygame.KEYUP}
         # self.__suf = pygame.surface.Surface
         self.__bg = None
         self.__pen = pen
@@ -102,7 +105,7 @@ class Input:
         self.__click = pygame.time.Clock()
         self._sparkTime = 0
 
-        self.__locked = True
+        self.__locked = False
         self.__isHanzi = False
 
         self.__downBackSpace = False
@@ -117,16 +120,17 @@ class Input:
         self.__downShift = False
         self.__downCaps = False
 
+        # self.__enterBack = None
+        self.__callBack = None
+        self.__id = None
+
         self.adjust_inputer()
         # self.swap_english_inputer(not self.__isHanzi)
 
-    # @staticmethod
-    # def get_word_by_pinyin(s0):
-    #     rlt = []
-    #     l0 = dag(__param, get_pinyin('lichunying'), path_num=10, log=True)
-    #     for i in l0:
-    #         rlt.append(''.join(i.path))
-    #     return rlt
+
+    def set_call_back(self, func, id_=None):
+        self.__callBack = func
+        self.__id = id_
 
     def update(self):
         self.__click.tick()
@@ -219,6 +223,13 @@ class Input:
 
     def event(self, e1):
         # print(e1)
+        if e1.type == pygame.MOUSEBUTTONDOWN:
+            if self.contains(e1.pos):
+                self.__locked = True
+            else:
+                self.__locked = False
+            return
+
         if e1.key == pygame.K_BACKSPACE:
             if e1.type == pygame.KEYDOWN:
                 self.__downBackSpace = True
@@ -286,10 +297,10 @@ class Input:
         return self.__anchor
 
     def get_size(self):
-        return self.__img.get_size()
+        return self.__bg.get_size()
 
     def get_rect(self):
-        return self.__img.get_rect()
+        return self.__bg.get_rect()
 
     def input_hanzi(self, s0):
         if self.__downShift:
@@ -330,6 +341,9 @@ class Input:
 
     def input_enter(self):
         self.__waitWords.clear()
+        if self.__callBack:
+            self.__callBack(self.__id, self.__words)
+        # self.__enterBack.slot()
         # print('fdfd')
 
     def scroll_page(self, up=True):
@@ -363,6 +377,9 @@ class Input:
         else:
             self.swap_english_inputer(False)
         # print(lid_hex)
+
+    def contains(self, pos):
+        return self.get_rect().move(self.__anchor[0], self.__anchor[1]).collidepoint(pos[0], pos[1])
 
 
 class TestWin:

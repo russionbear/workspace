@@ -1,0 +1,38 @@
+input, spin, com
+
+
+# input
+# "load mapName" to load a new map(-r for a retention) you chosen
+# "show maps" to show all maps
+# "show retentions" to show all retentions you saved
+# "help" to show those info
+# "create mapName" to create a map, you can edit it with format '.txt'
+# "exit" to exit'''
+
+choose force
+
+"help": "this menu",
+"save": "save filename\nto save",
+"exit": "",
+"back": "will not save",
+"map": "map [-c] to show map\n-c for showing country name",
+"push": '"push groupName y1-x1 y2-x2 ..." to save many cities at a group'
+        '\npush groupName, y1-x2:y1-x2 to choose cities y1<y<y2,x1<x<x2',
+"show": '"show [-d groupName]" to show all groups you saved\n'
+        '-d to delete group you created',
+"loc": '"loc y-x" to locate a city you chosen',
+"info": '"info [[-g groupName] | -p |-o|-c]" to view a city\n-g for cities in a group\
+,\n-o to view officers\n-p to view prisoners\n-c to view convey',
+"alt": "alt -w|-p|-r \n-w to allocate weapon\n-p to allocate troop\n-r to allocate random",
+"transfer": "transfer y-x -w|-m|-t|-p\n-w: weapon\n-m: money\n-t: troop\n-p: person",
+"buy": "buy [-p t1:m1 t2:m2 ...]|-i\nbuy weapons\n-i for information",
+"enlist": "enlist number\nmake sure that your money is enough",
+"govern": "govern -a|-b person_id|-s|[-d money person]|-i|-e|-r y-x|-o y-x|-m y-x \n-a appoint a mayor\n-b to break "
+          "sb "
+          "into prison\n-s to "
+          "search a person for you\n-e to enlist a prisoner\n-d to draw a person over your side\n-i for "
+          "information\n-o to start a outbreak\n-m to decrease it's money",
+"atk": "atk y-x groupName|[y1-x1,y2-x2,y3-x3,...] [-auto]\norder cities to attack city located at "
+       "y-x\n-auto for speed",
+"end": "end the turn",
+"who": "who am i"

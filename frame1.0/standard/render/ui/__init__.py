@@ -5,5 +5,9 @@
 # @Author    :russionbear
 
 
-if __name__ == "__main__":
-    pass
+class UType:
+    INPUT = 0x1
+    COMBOX = 0x2
+    SPINBOX = 0x3
+    MENU = 0x4
+    LISTVIEW = 0x5
