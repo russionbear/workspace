@@ -148,6 +148,32 @@ class _Pen:
                 width += 2
         return width * self.size // 2
 
+    def cut_by_size(self, s0, s, rvs=False):
+        width = 0
+        if rvs:
+            s1 = reversed(s0)
+        else:
+            s1 = s0
+
+        for i1, i in enumerate(s1):
+            c_ord = ord(i)
+            if 32 <= c_ord <= 126:
+                width += self.size / 2
+                if width > s:
+                    if rvs:
+                        return s0[-i1:]
+                    return s0[:i1-1]
+            else:
+                width += self.size
+                if width > s:
+                    if rvs:
+                        return s0[-i1:]
+                    return s0[:i1-1]
+
+        # if rvs:
+        #     return list(s1)
+        return s0
+
     # def get_height(self, s0):
     #     for i in s0:
     #         c_ord = ord(i)

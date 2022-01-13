@@ -444,13 +444,8 @@ class BgRenderShow(BgRender):
             self.scale(1)
         super(BgRenderShow, self).save()
 
-    # def auto_scale(self, n):
-    #     while n > 0:
-    #         obj.scale(1)
-    #         n -= 1
-    #     while n < 0:
-    #         obj.scale(-1)
-    #         n += 1
+    def swap_names(self, names):
+        self.names = names
 
 
 class Motor:

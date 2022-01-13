@@ -90,7 +90,7 @@ class Input:
         self.__fontSize = size
         self.__pencil = Pen.make_pen(size, font)
 
-        self.__words = '_'
+        self.__words = ' '
         self.__pinyinPoint = 0
         self.__SPoint = 0
 
@@ -126,7 +126,6 @@ class Input:
 
         self.adjust_inputer()
         # self.swap_english_inputer(not self.__isHanzi)
-
 
     def set_call_back(self, func, id_=None):
         self.__callBack = func
@@ -199,14 +198,24 @@ class Input:
         if not self.__priBg:
             rect = self.__pen.blit(self.__bg, self.__anchor)
             self.__bg.fill((0, 0, 0), rect.move(0, self.__fontSize))
+            pygame.draw.rect(self.__pen, (100, 255, 100), rect.move(0, self.__fontSize), 2)
         else:
             anchor = self.__anchor[0], self.__anchor[1] + self.__fontSize
             self.__pen.blit(self.__bg, anchor)
 
-        # import time
-        # begin = time.time()
-        self.__pen.blit(self.__pencil.render(self.__words), (0, self.__fontSize))
-        # print(time.time() - begin)
+        # if self.__locked:
+        #     t_words = self.__pencil.\
+        #         cut_by_size(self.__words, self.__width - self.__fontSize, True)
+        #     if t_words != self.__words:
+        #         t_words = '...' + t_words
+        # else:
+        #     t_words = self.__pencil.\
+        #         cut_by_size(self.__words, self.__width - 3 * self.__fontSize // 2)
+        #     if t_words != self.__words:
+        #         t_words += '...'
+
+        self.__pen.blit(self.__pencil.render(self.__words),
+                        (self.__anchor[0], self.__anchor[1] + self.__fontSize))
 
         if self.__waitWords:
             width = 0
@@ -219,15 +228,22 @@ class Input:
                 width += length1
                 tmp_rlt += s0
                 self.__maxWaitWords = i1
-            self.__pen.blit(self.__pencil.render(tmp_rlt), (0, 0))
+            # print(width, tmp_rlt, self.__width)
+            self.__pen.blit(self.__pencil.render(tmp_rlt), self.__anchor)
 
     def event(self, e1):
         # print(e1)
         if e1.type == pygame.MOUSEBUTTONDOWN:
-            if self.contains(e1.pos):
-                self.__locked = True
-            else:
-                self.__locked = False
+            if e1.button == 1:
+                if self.contains(e1.pos):
+                    self.__locked = True
+                else:
+                    # print('fdfdf')
+                    self.__locked = False
+                    self.__words = self.__words[:-1] + ' '
+            return
+
+        if not self.__locked:
             return
 
         if e1.key == pygame.K_BACKSPACE:
@@ -278,14 +294,11 @@ class Input:
             elif  e1.key == pygame.K_CAPSLOCK:
                 self.__downCaps = not self.__downCaps
             else:
-                if 32 <= e1.key <= 126:
+                try:
                     c0 = e1.unicode
-                else:
-                    return
-                # try:
-                #     c0 = chr(e1.key)
-                # except ValueError:
-                #     return
+                    ord(c0)
+                except ValueError:
+                    c0 = chr(e1.key)
                 self.input_hanzi(c0)
 
     def move(self, x=0, y=0, pos=None):
@@ -303,8 +316,10 @@ class Input:
         return self.__bg.get_rect()
 
     def input_hanzi(self, s0):
-        if self.__downShift:
-            print(s0)
+        # if self.__downShift:
+        #     print(s0)
+        if self.__pencil.get_width(self.__words) >= self.__width:
+            return
         if self.__waitWords:
             if '1' <= s0 <= '9' or s0 == ' ':
                 if s0 == ' ':
@@ -379,7 +394,8 @@ class Input:
         # print(lid_hex)
 
     def contains(self, pos):
-        return self.get_rect().move(self.__anchor[0], self.__anchor[1]).collidepoint(pos[0], pos[1])
+        # print(pos, self.get_rect(), self.get_pos())
+        return self.get_rect().move(self.__anchor[0], self.__anchor[1] + self.__fontSize).collidepoint(pos[0], pos[1])
 
 
 class TestWin:

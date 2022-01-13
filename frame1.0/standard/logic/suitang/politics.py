@@ -1066,6 +1066,7 @@ class ResManager:
         self.forces.clear()
         self.persons.clear()
         self.failed.clear()
+
         if not os.path.exists(filepath):
             print('path error')
             return False

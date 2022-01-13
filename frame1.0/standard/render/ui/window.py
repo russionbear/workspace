@@ -31,6 +31,7 @@ class GWindow:
                 i.event(e0)
 
     def update(self):
+        self.suf.fill((0, 0, 0))
         for i in self.children:
             i.update()
 

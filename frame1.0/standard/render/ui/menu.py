@@ -39,8 +39,8 @@ class MenuItem:
         if self.__nowImage:
             self.__pen.blit(self.__nowImage, self.__anchor)
             """debug"""
-            # pygame.draw.rect(self.__pen, (0, 255, 100),
-            #                  self.__nowImage.get_rect().move(self.__anchor[0], self.__anchor[1]), 4)
+            pygame.draw.rect(self.__pen, (0, 255, 100),
+                             self.__nowImage.get_rect().move(self.__anchor[0], self.__anchor[1]), 4)
 
         else:
             self.__pen.blit(self.__textSuf, self.__anchor)
@@ -92,7 +92,7 @@ class Menu:
         if bgt0 is not None:
             self.__bg = resManager.get_menu_image(bgt0)
 
-        self.__showed = True
+        # self.__showed = True
 
         self.__callBack = None
         self.__id = None
@@ -127,20 +127,21 @@ class Menu:
         if pos is not None:
             x, y = pos
         self.__anchor = x, y
+        print(x, y, 'move')
 
     def update(self):
-        if not self.__showed:
-            return
+        # if not self.__showed:
+        #     return
         self.__pen.blit(self.__suf, self.__anchor)
         if self.__bg:
             self.__suf.blit(self.__bg, (0, 0))
         for i in self.__children:
             i.update()
         """debug"""
-        # pygame.draw.rect(self.__pen, (0, 255, 100),
-        #                  self.__suf.get_rect().
-        #                  move(self.__anchor[0], self.__anchor[1]),
-        #                  4)
+        pygame.draw.rect(self.__pen, (0, 255, 100),
+                         self.__suf.get_rect().
+                         move(self.__anchor[0], self.__anchor[1]),
+                         4)
 
     def event(self, e0):
         if not self.contains(e0.pos) or e0.button != 1:
@@ -160,8 +161,8 @@ class Menu:
 
     def contains(self, pos):
         return self.__suf.get_rect().\
-            move(self.__anchor[0], self.__anchor[1]).\
-            collidepoint(pos[0], pos[1])
+            move(self.__anchor).\
+            collidepoint(pos)
         # print(pos)
         # for i in self.__children:
         #     if i.contains(pos):
@@ -179,8 +180,12 @@ class Menu:
     def get_size(self):
         return self.__suf.get_size()
 
+    def get_pos(self):
+        return self.__anchor
+
     def get_rect(self):
-        return self.__suf.get_rect().move(self.__anchor[0], self.__anchor[1])
+        return self.__suf.get_rect()
+        # return self.__suf.get_rect().move(self.__anchor)
 
     def set_bg(self, name):
         self.__bg = pygame.transform.scale(resManager.get_menu_image(name), self.__suf.get_size())
